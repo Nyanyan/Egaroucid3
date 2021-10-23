@@ -27,14 +27,24 @@ using namespace std;
 #define hw2_mhw 56
 #define hw2_p1 65
 #define n_line 6561
-
 #define inf 2000000000.0
 #define b_idx_num 38
+
+#define hash_table_size 16384
+#define hash_mask (hash_table_size - 1)
+#define book_stones 17
+#define ln_repair_book 27
 
 struct board{
     int b[b_idx_num];
     int p;
     double v;
+};
+
+struct book_node{
+    int k[hw];
+    int policy;
+    book_node* p_n_node;
 };
 
 const int idx_n_cell[b_idx_num] = {8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3};
@@ -65,6 +75,11 @@ const double cell_weight[hw2] = {
 };
 
 vector<int> vacant_lst;
+
+unordered_map<char, int> char_keys;
+book_node *book[hash_table_size];
+const string book_chars = "!#$&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abc";
+string param_compressed1;
 
 inline long long tim(){
     return chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -160,6 +175,12 @@ inline void init_move(){
                 legal_arr[1][idx][place] = true;
             else
                 legal_arr[1][idx][place] = false;
+            /*
+            if (legal_arr[1][idx][place]){
+                print_board_line(idx);
+                cerr << idx << " " << place << " " << move_arr[1][idx][place][0] << " " << move_arr[1][idx][place][1] << endl;
+            }
+            */
         }
         for (place = 0; place < hw; ++place){
             flip_arr[0][idx][place] = idx;
@@ -209,20 +230,21 @@ inline void init_turn_board(){
     int i, j;
     for (i = 0; i < hw; ++i){
         for (j = 0; j < hw; ++j){
-            turn_board[0][i * hw + j] = i * hw + (hw_m1 - j);
-            turn_board[1][i * hw + j] = (hw_m1 - j) * hw + i;
-            turn_board[2][i * hw + j] = (hw_m1 - i) * hw + j;
-            turn_board[3][i * hw + j] = j * hw + (hw_m1 - i);
+            turn_board[0][i * hw + j] = i * hw + j;
+            turn_board[1][i * hw + j] = j * hw + i;
+            turn_board[2][i * hw + j] = (hw_m1 - i) * hw + (hw_m1 - j);
+            turn_board[3][i * hw + j] = (hw_m1 - j) * hw + (hw_m1 - i);
         }
     }
 }
 
-inline board move(board b, const int global_place){
+inline board move(const board b, const int global_place){
     board res;
     int j, place, g_place;
     for (int i = 0; i < b_idx_num; ++i)
         res.b[i] = b.b[i];
     for (const int &i: place_included[global_place]){
+        //cerr << "i " << i << " " << b.b[i] << " " << move_arr[b.p][b.b[i]][place][0] << " " << move_arr[b.p][b.b[i]][place][1] << endl;
         place = local_place[i][global_place];
         for (j = 1; j <= move_arr[b.p][b.b[i]][place][0]; ++j){
             g_place = global_place - move_offset[i] * j;
@@ -241,6 +263,117 @@ inline board move(board b, const int global_place){
     return res;
 }
 
+inline string coord_str(int policy, int direction){
+    string res;
+    res += (char)(turn_board[direction][policy] % hw + 97);
+    res += to_string(turn_board[direction][policy] / hw + 1);
+    return res;
+}
+
+inline int calc_hash(const int *p){
+    int seed = 0;
+    for (int i = 0; i < hw; ++i)
+        seed ^= p[i] << (i / 4);
+    return seed & hash_mask;
+}
+
+inline void hash_table_init(book_node** hash_table){
+    for(int i = 0; i < hash_table_size; ++i)
+        hash_table[i] = NULL;
+}
+
+inline book_node* node_init(const int *key, int policy){
+    book_node* p_node = NULL;
+    p_node = (book_node*)malloc(sizeof(book_node));
+    for (int i = 0; i < hw; ++i)
+        p_node->k[i] = key[i];
+    p_node->policy = policy;
+    p_node->p_n_node = NULL;
+    return p_node;
+}
+
+inline bool compare_key(const int *a, const int *b){
+    for (int i = 0; i < hw; ++i){
+        if (a[i] != b[i])
+            return false;
+    }
+    return true;
+}
+
+inline void register_book(book_node** hash_table, const int *key, int hash, int policy){
+    if(hash_table[hash] == NULL){
+        hash_table[hash] = node_init(key, policy);
+    } else {
+        book_node *p_node = hash_table[hash];
+        book_node *p_pre_node = NULL;
+        p_pre_node = p_node;
+        while(p_node != NULL){
+            if(compare_key(key, p_node->k)){
+                p_node->policy = policy;
+                return;
+            }
+            p_pre_node = p_node;
+            p_node = p_node->p_n_node;
+        }
+        p_pre_node->p_n_node = node_init(key, policy);
+    }
+}
+
+inline int get_book(const int *key){
+    book_node *p_node = book[calc_hash(key)];
+    while(p_node != NULL){
+        if(compare_key(key, p_node->k)){
+            return p_node->policy;
+        }
+        p_node = p_node->p_n_node;
+    }
+    return -1;
+}
+
+inline void init_book(){
+    int i;
+    for (i = 0; i < hw2; ++i)
+        char_keys[book_chars[i]] = i;
+    ifstream ifs("book/param/book.txt");
+    if (ifs.fail()){
+        cerr << "book file not exist" << endl;
+        exit(1);
+    }
+    getline(ifs, param_compressed1);
+    int ln = param_compressed1.length();
+    int coord;
+    board fb, nb;
+    const int first_board[b_idx_num] = {6560, 6560, 6560, 6425, 6326, 6560, 6560, 6560, 6560, 6560, 6560, 6425, 6344, 6506, 6560, 6560, 6560, 6560, 6560, 6560, 6344, 6425, 6398, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6479, 6344, 6398, 6074, 6560, 6560, 6560};
+    hash_table_init(book);
+    int data_idx = 0;
+    int n_book = 0;
+    while (data_idx < ln){
+        fb.p = 1;
+        for (i = 0; i < b_idx_num; ++i)
+            fb.b[i] = first_board[i];
+        while (true){
+            if (param_compressed1[data_idx] == ' '){
+                ++data_idx;
+                break;
+            }
+            coord = char_keys[param_compressed1[data_idx++]];
+            nb = move(fb, coord);
+            fb.p = nb.p;
+            for (i = 0; i < b_idx_num; ++i)
+                fb.b[i] = nb.b[i];
+        }
+        coord = char_keys[param_compressed1[data_idx++]];
+        register_book(book, fb.b, calc_hash(fb.b), coord);
+        ++n_book;
+    }
+    cerr << n_book << " boards in book" << endl;
+}
+
+inline int search(board b){
+    int policy;
+    return policy;
+}
+
 int cmp_vacant(int p, int q){
     return cell_weight[p] > cell_weight[q];
 }
@@ -251,51 +384,109 @@ inline int input_board(int (&board)[b_idx_num], int direction){
     char elem;
     int n_stones = 0;
     vacant_lst.clear();
-    for (i = 0; i < hw2; ++i){
-        cin >> elem;
-        if (elem != '.'){
-            b |= (unsigned long long)(elem == '0') << turn_board[direction][i];
-            w |= (unsigned long long)(elem == '1') << turn_board[direction][i];
-            ++n_stones;
-        } else
-            vacant_lst.push_back(turn_board[direction][i]);
+    for (i = 0; i < hw; ++i){
+        string raw_board;
+        cin >> raw_board; cin.ignore();
+        cerr << raw_board << endl;
+        for (j = 0; j < hw; ++j){
+            elem = raw_board[j];
+            if (elem != '.'){
+                b |= (unsigned long long)(elem == '0') << turn_board[direction][i * hw + j];
+                w |= (unsigned long long)(elem == '1') << turn_board[direction][i * hw + j];
+                ++n_stones;
+            } else{
+                vacant_lst.push_back(turn_board[direction][i * hw + j]);
+            }
+        }
     }
     if (n_stones < hw2_m1)
         sort(vacant_lst.begin(), vacant_lst.end(), cmp_vacant);
     for (i = 0; i < b_idx_num; ++i){
-        board[i] = 0;
+        board[i] = n_line - 1;
         for (j = 0; j < idx_n_cell[i]; ++j){
             if (1 & (b >> global_place[i][j]))
-                board[i] += 0;
+                board[i] -= pow3[hw_m1 - j] * 2;
             else if (1 & (w >> global_place[i][j]))
-                board[i] += pow3[j];
-            else
-                board[i] += pow3[j] * 2;
+                board[i] -= pow3[hw_m1 - j];
         }
     }
     return n_stones;
 }
 
-inline string coord_str(int policy, int direction){
-    string res;
-    res += (char)(board_c::turn_board[direction][policy] % hw + 97);
-    res += to_string(board_c::turn_board[direction][policy] / hw + 1);
-    return res;
-}
-
 int main(){
+    int direction, ai_player, policy, n_stones;
+    board b;
+    cin >> ai_player;
     long long strt = tim();
-    int direction;
+    cerr << "initializing" << endl;
     init_move();
     init_local_place();
     init_included();
     init_turn_board();
+    init_book();
     cerr << "iniitialized in " << tim() - strt << " ms" << endl;
-    board b;
-    cerr << input_board(b.b, 0) << endl;
-    print_board(b.b);
-    b.p = 0;
-    board nb = move(b, 34);
-    print_board(nb.b);
+    /*
+    int bo[b_idx_num];
+    input_board(bo, 0);
+    for (int i = 0; i < b_idx_num; ++i){
+        cerr << i << " ";
+        print_board_line(bo[i]);
+        cerr << bo[i] << endl;
+        //cerr << bo[i] << ", ";
+    }
+    cerr << endl;
+    print_board(bo);
+    for (int i = 0; i < b_idx_num; ++i){
+        cerr << bo[i] << ", ";
+    }
+    */
+    if (ai_player == 0){
+        direction = 0;
+        string raw_board;
+        for (int i = 0; i < hw; ++i){
+            cin >> raw_board; cin.ignore();
+        }
+        policy = 37;
+        cerr << "FIRST direction " << direction << endl; 
+        cerr << "book policy " << policy << endl;
+        cout << coord_str(policy, direction) << endl;
+    } else {
+        string board_turns[4] = {
+            "...........................10......000..........................",
+            "...........................10......00.......0...................",
+            "..........................000......01...........................",
+            "...................0.......00......01..........................."
+        };
+        string board_str;
+        string tmp;
+        for (int i = 0; i < hw;++i){
+            cin >> tmp; cin.ignore();
+            board_str += tmp;
+        }
+        for (int i = 0; i < 4; ++i){
+            if (board_str == board_turns[i])
+                direction = i;
+        }
+        int first_board[b_idx_num] = {6560, 6560, 6560, 6425, 6326, 6560, 6560, 6560, 6560, 6560, 6560, 6425, 6344, 6506, 6560, 6560, 6560, 6560, 6560, 6560, 6344, 6425, 6398, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6479, 6344, 6398, 6074, 6560, 6560, 6560};
+        policy = get_book(first_board);
+        cerr << "FIRST direction " << direction << endl;
+        cerr << "book policy " << policy << endl;
+        cout << coord_str(policy, direction) << endl;
+    }
+    while (true){
+        n_stones = input_board(b.b, direction);
+        b.p = ai_player;
+        if (n_stones < book_stones){
+            policy = get_book(b.b);
+            cerr << "book policy " << policy << endl;
+            if (policy != -1){
+                b = move(b, policy);
+                ++n_stones;
+                cout << coord_str(policy, direction) << " MSG BOOK|" << 1 / 100 << endl;
+                continue;
+            }
+        }
+        policy = search(b);
+    }
     return 0;
 }
