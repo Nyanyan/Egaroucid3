@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+        <script id="twitter-wjs" src="http://platform.twitter.com/widgets.js"></script>
+        <link rel="stylesheet" href="static/css/style.css">
+        <title>Egaroucid</title>
+    </head>
+    <body>
+        <div class="title">Egaroucid 3 - Othello AI</div>
+        <p align="center">
+            <input type="radio" class="radio_size" name="ai_player" value="1" id="white" checked><label for="white" class="setting">黒(先手): あなた 白(後手): AI</label>
+            <input type="radio" class="radio_size" name="ai_player" value="0" id="black"><label for="black" class="setting">黒(先手): AI 白(後手): あなた</label>
+        </p>
+        <div align="center">
+            <input type="submit" class="setting" value="対局開始" onclick="start()" id="start">
+        </div>
+        <div id="main">
+            <table class="coords" id="coord_top" align="center"></table>
+            <table align="center">
+                <tr>
+                    <td><table class="coords" id="coord_left" align="center"></table></td>
+                    <td><table class="board" id="board" align="center"></table></td>
+                    <td><table class="coords" id="coord_right" align="center"></table></td>
+                </tr>
+            </table>
+            <table class="status" id="status" align="center">
+                <tr>
+                    <td class="status_cell"><span class="state_blank"></span></td>
+                    <td class="status_cell"><span class="black_stone"></span></td>
+                    <td class="status_char"><span class="state_blank">2</span></td>
+                    <td class="status_char"><span class="state_blank">-</span></td>
+                    <td class="status_char"><span class="state_blank">2</span></td>
+                    <td class="status_cell"><span class="white_stone"></span></td>
+                    <td class="status_cell"><span class="state_blank"></span></td>
+                </tr>
+            </table>
+        </div>
+        <div id="info" align="center">
+            <div class="sub_title">対局情報</div>
+            <div class="sub_sub_title">評価値グラフ</div>
+            <canvas id="graph"></canvas>
+            <div class="sub_sub_title">棋譜</div>
+            <div class="record" id="record"></div>
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.js"></script>
+        <script src="static/js/script.js"></script>
+    </body>
+</html>

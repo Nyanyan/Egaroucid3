@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define tl 1000
+#define tl 145
 
 #define hw 8
 #define hw_m1 7
@@ -560,7 +560,6 @@ double nega_scout(board *b, const long long strt, int skip_cnt, int depth, doubl
 
 inline search_result search(const board b){
     long long strt = tim();
-    int policy;
     vector<board> nb;
     for (const int &cell: vacant_lst){
         for (const int &idx: place_included[cell]){
@@ -571,9 +570,10 @@ inline search_result search(const board b){
         }
     }
     int canput = nb.size();
-    double alpha = -1.0, beta = 1.0;
+    double alpha = -1.1, beta = 1.1;
     int depth = 5;
     int res_depth;
+    int policy = -1;
     int tmp_policy, i;
     double g, value;
     searched_nodes = 0;
@@ -596,7 +596,7 @@ inline search_result search(const board b){
         res_depth = depth;
         ++depth;
     }
-    cerr << "searched nodes: " << searched_nodes << " nps: " << searched_nodes * 1000 / tl << endl;
+    cerr << "depth: " << res_depth + 1 << " searched nodes: " << searched_nodes << " nps: " << searched_nodes * 1000 / (tim() - strt) << endl;
     search_result res;
     res.policy = policy;
     res.value = value;
@@ -606,8 +606,11 @@ inline search_result search(const board b){
 
 inline string coord_str(int policy, int direction){
     string res;
-    res += (char)(turn_board[direction][policy] % hw + 97);
-    res += to_string(turn_board[direction][policy] / hw + 1);
+    //res += (char)(turn_board[direction][policy] % hw + 97);
+    //res += to_string(turn_board[direction][policy] / hw + 1);
+    res += to_string(turn_board[direction][policy] / hw);
+    res += " ";
+    res += to_string(turn_board[direction][policy] % hw);
     return res;
 }
 
@@ -697,7 +700,7 @@ int main(){
         policy = get_book(first_board);
         cerr << "FIRST direction " << direction << endl;
         cerr << "book policy " << policy << endl;
-        cout << coord_str(policy, direction) << " MSG B|" << 0 << endl;
+        cout << coord_str(policy, direction) << " " << 0 << endl;
     }
     while (true){
         n_stones = input_board(b.b, direction);
@@ -708,12 +711,13 @@ int main(){
             if (policy != -1){
                 b = move(&b, policy);
                 ++n_stones;
-                cout << coord_str(policy, direction) << " MSG B|" << 0 << endl;
+                cout << coord_str(policy, direction) << " " << 0 << endl;
                 continue;
             }
         }
         result = search(b);
-        cout << coord_str(result.policy, direction) << " MSG S|" << result.depth << "|" << result.value << endl;
+        cerr << "policy " << result.policy << endl;
+        cout << coord_str(result.policy, direction) << " " << result.value << endl;
     }
     return 0;
 }
