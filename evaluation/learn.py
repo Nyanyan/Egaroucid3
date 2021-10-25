@@ -18,9 +18,9 @@ import os
 
 inf = 10000000.0
 
-min_n_stones = 4 + 30
-max_n_stones = 4 + 40
-game_num = 100000
+min_n_stones = 4 + 50
+max_n_stones = 4 + 60
+game_num = 50000
 test_ratio = 0.1
 n_epochs = 200
 
@@ -146,9 +146,9 @@ names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diag
 #names = ['edge2x', 'triangle']
 for i in range(len(pattern_idx)):
     x[i] = Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in')
-    y = Dense(32)(x[i])
+    y = Dense(16)(x[i])
     y = Lambda(lambda xx: LeakyReLU(xx))(y)
-    y = Dense(32)(y)
+    y = Dense(16)(y)
     y = Lambda(lambda xx: LeakyReLU(xx))(y)
     y = Dense(1, name=names[i] + '_out')(y)
     if i == 0:

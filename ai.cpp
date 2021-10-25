@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define tl 500
+#define tl 145
 
 #define hw 8
 #define hw_m1 7
@@ -44,8 +44,8 @@ using namespace std;
 
 #define n_patterns 10
 #define n_phases 4
-#define n_dense0 32
-#define n_dense1 32
+#define n_dense0 16
+#define n_dense1 16
 
 struct board{
     int b[b_idx_num];
@@ -422,7 +422,7 @@ inline double leaky_relu(double x){
 }
 
 inline double predict(int pattern_size, double in_arr[], double dense0[n_dense0][20], double bias0[n_dense0], double dense1[n_dense1][n_dense0], double bias1[n_dense1], double dense2[n_dense1], double bias2){
-    double hidden0[32], hidden1[32];
+    double hidden0[16], hidden1[16];
     int i, j;
     for (i = 0; i < n_dense0; ++i){
         hidden0[i] = bias0[i];
@@ -480,7 +480,7 @@ inline void init_evaluation(){
     const int pattern_sizes[n_patterns] = {8, 8, 8, 5, 6, 7, 8, 10, 10, 10};
     for (phase_idx = 0; phase_idx < n_phases; ++phase_idx){
         for (pattern_idx = 0; pattern_idx < n_patterns; ++pattern_idx){
-            for (i = 0; i < pattern_sizes[phase_idx] * 2; ++i){
+            for (i = 0; i < pattern_sizes[pattern_idx] * 2; ++i){
                 for (j = 0; j < n_dense0; ++j){
                     getline(ifs, line);
                     dense0[j][i] = stof(line);
@@ -506,7 +506,7 @@ inline void init_evaluation(){
             }
             getline(ifs, line);
             bias2 = stof(line);
-            pre_evaluation(phase_idx, pattern_idx, pattern_sizes[phase_idx], dense0, bias0, dense1, bias1, dense2, bias2);
+            pre_evaluation(phase_idx, pattern_idx, pattern_sizes[pattern_idx], dense0, bias0, dense1, bias1, dense2, bias2);
         }
     }
 }
@@ -665,31 +665,89 @@ inline double evaluate(const board *b){
         + pop_digit[b->b[14]][7] * pow3[4] + pop_digit[b->b[14]][6] * pow3[3] + pop_digit[b->b[14]][5] * pow3[2] + pop_digit[b->b[14]][4] * pow3[1] + pop_digit[b->b[14]][3];
     corner25 += evaluate_arr[phase_idx][9][idx];
 
+    //cerr << line2 / 4.0 << " " << line3 / 4.0 << " " << line4 / 4.0 << " " << diagonal5 / 4.0 << " " << diagonal6 / 4.0 << " " << diagonal7 / 4.0 << " " << diagonal8 / 2.0 << " " << edge_2x / 4.0 << " " << triangle / 4.0 << " " << corner25 / 8.0 << endl;
     res = line2 / 4.0 + line3 / 4.0 + line4 / 4.0 + diagonal5 / 4.0 + diagonal6 / 4.0 + diagonal7 / 4.0 + diagonal8 / 2.0 + edge_2x / 4.0 + triangle / 4.0 + corner25 / 8.0;
     if (b->p == 1)
         res = -res;
     return min(0.9999, max(-0.9999, res));
 }
 
-int move_ordering(const board p, const board q){
-    pair<double, double> plu = get_search(p.b, calc_hash(p.b) & search_hash_mask, f_search_table_idx);
-    pair<double, double> qlu = get_search(q.b, calc_hash(q.b) & search_hash_mask, f_search_table_idx);
-    if (plu.first != -inf){
-        if (qlu.first != inf)
-            return plu.first < qlu.first;
+bool move_ordering(const board p, const board q){
+    double pl = get_search(p.b, calc_hash(p.b) & search_hash_mask, f_search_table_idx).first;
+    double ql = get_search(q.b, calc_hash(q.b) & search_hash_mask, f_search_table_idx).first;
+    if (pl != -inf){
+        if (ql != -inf)
+            return pl < ql;
         else
-            return 1;
+            return false;
     } else{
-        if (qlu.first != inf)
-            return 0;
+        if (ql != -inf)
+            return true;
         else
             return evaluate(&p) < evaluate(&q);
     }
 }
 
-double nega_scout(board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
+double nega_alpha(board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
     if (tim() - strt > tl)
         return -inf;
+    ++searched_nodes;
+    if (skip_cnt == 2)
+        return end_game(b);
+    if (depth == 0)
+        return evaluate(b);
+    int hash = (int)(calc_hash(b->b) & search_hash_mask);
+    pair<double, double> lu = get_search(b->b, hash, 1 - f_search_table_idx);
+    if (lu.first != -inf){
+        if (lu.first == lu.second)
+            return lu.first;
+        alpha = max(alpha, lu.first);
+        if (alpha >= beta)
+            return alpha;
+    }
+    if (lu.second != -inf){
+        beta = min(beta, lu.second);
+        if (alpha >= beta)
+            return beta;
+    }
+    double g;
+    board nb;
+    bool passed = true;
+    double first_alpha = alpha;
+    for (const int &cell: vacant_lst){
+        for (const int &idx: place_included[cell]){
+            if (move_arr[b->p][b->b[idx]][local_place[idx][cell]][0] || move_arr[b->p][b->b[idx]][local_place[idx][cell]][1]){
+                passed = false;
+                nb = move(b, cell);
+                g = -nega_alpha(&nb, strt, 0, depth - 1, -beta, -alpha);
+                if (g == inf)
+                    return -inf;
+                alpha = max(alpha, g);
+                if (beta <= alpha){
+                    if (lu.first < alpha)
+                        register_search(1 - f_search_table_idx, b->b, hash, alpha, lu.second);
+                    return alpha;
+                }
+                break;
+            }
+        }
+    }
+    if (passed){
+        b->p = 1 - b->p;
+        return -nega_alpha(b, strt, skip_cnt + 1, depth, -beta, -alpha);
+    }
+    if (alpha <= first_alpha)
+        register_search(1 - f_search_table_idx, b->b, hash, lu.first, alpha);
+    else
+        register_search(1 - f_search_table_idx, b->b, hash, alpha, alpha);
+    return alpha;
+}
+
+double nega_scout(board *b, const long long strt, int skip_cnt, int depth, int max_depth, double alpha, double beta){
+    if (tim() - strt > tl)
+        return -inf;
+    if (max_depth - depth >= 3)
+        return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
     ++searched_nodes;
     if (skip_cnt == 2)
         return end_game(b);
@@ -721,13 +779,13 @@ double nega_scout(board *b, const long long strt, int skip_cnt, int depth, doubl
     int canput = nb.size();
     if (canput == 0){
         b->p = 1 - b->p;
-        return -nega_scout(b, strt, skip_cnt + 1, depth, -beta, -alpha);
+        return -nega_scout(b, strt, skip_cnt + 1, depth, max_depth, -beta, -alpha);
     }
     if (canput > 2)
         sort(nb.begin(), nb.end(), move_ordering);
     double v, g;
-    g = -nega_scout(&nb[0], strt, 0, depth - 1, -beta, -alpha);
-    if (fabs(g) == inf)
+    g = -nega_scout(&nb[0], strt, 0, depth - 1, max_depth, -beta, -alpha);
+    if (g == inf)
         return -inf;
     if (beta <= g){
         if (lu.first < g)
@@ -737,8 +795,8 @@ double nega_scout(board *b, const long long strt, int skip_cnt, int depth, doubl
     v = g;
     alpha = max(alpha, g);
     for (int i = 1; i < canput; ++i){
-        g = -nega_scout(&nb[i], strt, 0, depth - 1, -alpha - window, -alpha);
-        if (fabs(g) == inf)
+        g = -nega_scout(&nb[i], strt, 0, depth - 1, max_depth, -alpha - window, -alpha);
+        if (g == inf)
             return -inf;
         if (beta <= g){
             if (lu.first < g)
@@ -747,7 +805,9 @@ double nega_scout(board *b, const long long strt, int skip_cnt, int depth, doubl
         }
         if (alpha < g){
             alpha = g;
-            g = -nega_scout(&nb[i], strt, 0, depth - 1, -beta, -alpha);
+            g = -nega_scout(&nb[i], strt, 0, depth - 1, max_depth, -beta, -alpha);
+            if (g == inf)
+                return -inf;
             if (beta <= g){
                 if (lu.first < g)
                     register_search(1 - f_search_table_idx, b->b, hash, g, lu.second);
@@ -777,33 +837,44 @@ inline search_result search(const board b){
         }
     }
     int canput = nb.size();
-    double alpha = -1.1, beta = 1.1;
+    cerr << "canput: " << canput << endl;
     int depth = 5;
     int res_depth;
     int policy = -1;
     int tmp_policy, i;
-    double g, value;
+    double alpha, beta, g, value;
     searched_nodes = 0;
     while (tim() - strt < tl){
+        alpha = -1.5;
+        beta = 1.5;
         search_hash_table_init(1 - f_search_table_idx);
         if (canput > 2)
             sort(nb.begin(), nb.end(), move_ordering);
-        for (i = 0; i < canput; ++i){
-            g = -nega_scout(&nb[i], strt, 0, depth, -beta, -alpha);
-            if (fabs(g) == inf)
+        alpha = max(alpha, -nega_scout(&nb[canput - 1], strt, 0, depth, depth, -beta, -alpha));
+        tmp_policy = nb[canput - 1].policy;
+        for (i = canput - 2; i >= 0; --i){
+            g = -nega_scout(&nb[i], strt, 0, depth, depth, -alpha - window, -alpha);
+            if (g == inf)
                 break;
             if (alpha < g){
-                alpha = g;
-                tmp_policy = nb[i].policy;
+                g = -nega_scout(&nb[i], strt, 0, depth, depth, -beta, -g);
+                if (alpha < g){
+                    alpha = g;
+                    tmp_policy = nb[i].policy;
+                }
             }
         }
-        f_search_table_idx = 1 - f_search_table_idx;
-        policy = tmp_policy;
-        value = alpha;
-        res_depth = depth;
-        ++depth;
+        if (i == -1){
+            f_search_table_idx = 1 - f_search_table_idx;
+            policy = tmp_policy;
+            value = alpha;
+            res_depth = depth;
+            if (fabs(value) == 1.0)
+                break;
+            ++depth;
+        }
     }
-    cerr << "depth: " << res_depth + 1 << " searched nodes: " << searched_nodes << " nps: " << searched_nodes * 1000 / (tim() - strt) << endl;
+    cerr << "depth: " << res_depth << " searched nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / (tim() - strt + 1) << endl;
     cerr << "policy: " << policy << " value: " << value << endl;
     search_result res;
     res.policy = policy;
