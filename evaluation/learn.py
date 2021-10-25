@@ -18,9 +18,9 @@ import os
 
 inf = 10000000.0
 
-min_n_stones = 4 + 20
+min_n_stones = 4 + 50
 max_n_stones = 4 + 60
-game_num = 10000
+game_num = 100000
 test_ratio = 0.1
 n_epochs = 200
 
@@ -170,42 +170,12 @@ test_labels = all_labels[n_train_data:len_data]
 model.compile(loss='mse', metrics='mae', optimizer='adam')
 print(model.evaluate(test_data, test_labels))
 early_stop = EarlyStopping(monitor='val_loss', patience=5)
-model_checkpoint = ModelCheckpoint(filepath=os.path.join('param/models', 'model_{epoch:02d}_{val_loss:.2f}.h5'), monitor='val_loss', verbose=1)
+model_checkpoint = ModelCheckpoint(filepath=os.path.join('learned_data/models', 'model_{epoch:02d}_{val_loss:.2f}.h5'), monitor='val_loss', verbose=1)
 history = model.fit(train_data, train_labels, epochs=n_epochs, validation_data=(test_data, test_labels), callbacks=[early_stop, model_checkpoint])
 
-with open('param/param.txt', 'w') as f:
-    i = 0
-    while True:
-        try:
-            #print(i, model.layers[i])
-            dammy = model.layers[i]
-            j = 0
-            while True:
-                try:
-                    print(model.layers[i].weights[j].shape)
-                    if len(model.layers[i].weights[j].shape) == 4:
-                        for ll in range(model.layers[i].weights[j].shape[3]):
-                            for kk in range(model.layers[i].weights[j].shape[2]):
-                                for jj in range(model.layers[i].weights[j].shape[1]):
-                                    for ii in range(model.layers[i].weights[j].shape[0]):
-                                        f.write('{:.14f}'.format(model.layers[i].weights[j].numpy()[ii][jj][kk][ll]) + '\n')
-                    elif len(model.layers[i].weights[j].shape) == 2:
-                        for ii in range(model.layers[i].weights[j].shape[0]):
-                            for jj in range(model.layers[i].weights[j].shape[1]):
-                                f.write('{:.14f}'.format(model.layers[i].weights[j].numpy()[ii][jj]) + '\n')
-                    elif len(model.layers[i].weights[j].shape) == 1:
-                        for ii in range(model.layers[i].weights[j].shape[0]):
-                            f.write('{:.14f}'.format(model.layers[i].weights[j].numpy()[ii]) + '\n')
-                    j += 1
-                except:
-                    break
-            i += 1
-        except:
-            break
 now = datetime.datetime.today()
 print(str(now.year) + digit(now.month, 2) + digit(now.day, 2) + '_' + digit(now.hour, 2) + digit(now.minute, 2))
-#model.save('param/additional_learn_model/' + str(now.year) + digit(now.month, 2) + digit(now.day, 2) + '_' + digit(now.hour, 2) + digit(now.minute, 2) + '.h5')
-model.save('param/model.h5')
+model.save('learned_data/model.h5')
 
 for key in ['loss', 'val_loss']:
     plt.plot(history.history[key], label=key)

@@ -9,8 +9,8 @@ book/one_board.txt
 book/some_boards.txt
 book/cmd.txt
 book/cmd2.txt
-book/param
+book/learned_data
 book/third_party
-evaluation/param
+evaluation/learned_data
 evaluation/third_party
 evaluation/data

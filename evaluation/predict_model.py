@@ -19,7 +19,7 @@ import os
 def LeakyReLU(x):
     return tf.math.maximum(0.01 * x, x)
 
-model = load_model('param/model.h5')
+model = load_model('learned_data/model.h5')
 
 in_arr = [0,1,1,0,1,0,1,1,1,1,0,0,0,1,0,1,0,0,0,0]
 in_arr = np.array([in_arr])

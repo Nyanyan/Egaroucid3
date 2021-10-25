@@ -15,6 +15,7 @@ from random import randrange
 import subprocess
 import datetime
 import os
+import sys
 
 def LeakyReLU(x):
     return tf.math.maximum(0.01 * x, x)
@@ -25,11 +26,11 @@ def get_layer_index(model, layer_name, not_found=None):
             return i
     return not_found
 
-model = load_model('param/model.h5')
+model = load_model('learned_data/' + sys.argv[1])
 
 names = ['dense', 'dense_1', 'edge2x_out', 'dense_2', 'dense_3', 'triangle_out']
 
-with open('param/param.txt', 'w') as f:
+with open('learned_data/' + sys.argv[2], 'w') as f:
     for name in names:
         i = get_layer_index(model, name)
         try:
