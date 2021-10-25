@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define tl 500
+#define tl 5000
 
 #define hw 8
 #define hw_m1 7
@@ -940,14 +940,14 @@ inline search_result search(const board b){
             f_search_table_idx = 1 - f_search_table_idx;
             policy = tmp_policy;
             value = alpha;
-            res_depth = depth;
-            cerr << depth << " " << alpha << " " << searched_nodes << endl;
+            res_depth = depth + 1;
+            cerr << res_depth << " " << policy << " " << value << " " << searched_nodes << endl;
             if (fabs(value) == 1.0)
                 break;
             ++depth;
         }
     }
-    cerr << "depth: " << res_depth << " searched nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / (tim() - strt + 1) << endl;
+    cerr << "depth: " << res_depth + 1 << " searched nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / (tim() - strt + 1) << endl;
     cerr << "policy: " << policy << " value: " << value << endl;
     search_result res;
     res.policy = policy;
