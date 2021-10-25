@@ -42,6 +42,7 @@ using namespace std;
 #define search_hash_table_size 1048576
 #define search_hash_mask (search_hash_table_size - 1)
 
+#define n_patterns 2
 #define n_dense0 32
 #define n_dense1 32
 
@@ -103,8 +104,7 @@ book_node *book[book_hash_table_size];
 search_node *search_replace_table[2][search_hash_table_size];
 int searched_nodes;
 int f_search_table_idx;
-//int edge_2x_idxes[8][10] = {{9, 0, 1, 2, 3, 4, 5, 6, 7, 14}, {9, 0, 8, 16, 24, 32, 40, 48, 56, 49}, {49, 56, 57, 58, 59, 60, 61, 62, 63, 54}, {54, 63, 55, 47, 39, 31, 23, 15, 7, 14}, {14, 7, 6, 5, 4, 3, 2, 1, 0, 9}, {49, 56, 48, 40, 32, 24, 16, 8, 0, 9}, {54, 63, 62, 61, 60, 59, 58, 57, 56, 49}, {14, 7, 15, 23, 31, 39, 47, 55, 63, 54}};
-double evaluate_arr[1][max_evaluate_idx];
+double evaluate_arr[n_patterns][max_evaluate_idx];
 
 inline long long tim(){
     return chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -465,40 +465,42 @@ inline void init_evaluation(){
         exit(1);
     }
     string line;
-    int i, j;
+    int i, j, pattern_idx;
     double dense0[n_dense0][20];
     double bias0[n_dense0];
     double dense1[n_dense1][n_dense0];
     double bias1[n_dense1];
     double dense2[n_dense1];
     double bias2;
-    for (i = 0; i < 20; ++i){
-        for (j = 0; j < n_dense0; ++j){
-            getline(ifs, line);
-            dense0[j][i] = stof(line);
+    for (pattern_idx = 0; pattern_idx < n_patterns; ++pattern_idx){
+        for (i = 0; i < 20; ++i){
+            for (j = 0; j < n_dense0; ++j){
+                getline(ifs, line);
+                dense0[j][i] = stof(line);
+            }
         }
-    }
-    for (i = 0; i < n_dense0; ++i){
-        getline(ifs, line);
-        bias0[i] = stof(line);
-    }
-    for (i = 0; i < n_dense0; ++i){
-        for (j = 0; j < n_dense1; ++j){
+        for (i = 0; i < n_dense0; ++i){
             getline(ifs, line);
-            dense1[j][i] = stof(line);
+            bias0[i] = stof(line);
         }
-    }
-    for (i = 0; i < n_dense1; ++i){
+        for (i = 0; i < n_dense0; ++i){
+            for (j = 0; j < n_dense1; ++j){
+                getline(ifs, line);
+                dense1[j][i] = stof(line);
+            }
+        }
+        for (i = 0; i < n_dense1; ++i){
+            getline(ifs, line);
+            bias1[i] = stof(line);
+        }
+        for (i = 0; i < n_dense1; ++i){
+            getline(ifs, line);
+            dense2[i] = stof(line);
+        }
         getline(ifs, line);
-        bias1[i] = stof(line);
+        bias2 = stof(line);
+        pre_evaluation(pattern_idx, 10, dense0, bias0, dense1, bias1, dense2, bias2);
     }
-    for (i = 0; i < n_dense1; ++i){
-        getline(ifs, line);
-        dense2[i] = stof(line);
-    }
-    getline(ifs, line);
-    bias2 = stof(line);
-    pre_evaluation(0, 10, dense0, bias0, dense1, bias1, dense2, bias2);
 }
 
 inline void search_hash_table_init(const int table_idx){
@@ -563,18 +565,30 @@ inline double end_game(const board *b){
 }
 
 inline double evaluate(const board *b){
-    int pattern_idx = 0;
     int idx;
-    double edge_2x = 0.0;
+    double res, edge_2x = 0.0, triangle = 0.0;
     idx = pop_digit[b->b[1]][6] * pow3[9] + b->b[0] * pow3[1] + pop_digit[b->b[1]][1];
-    edge_2x += evaluate_arr[pattern_idx][idx];
+    edge_2x += evaluate_arr[0][idx];
     idx = pop_digit[b->b[6]][6] * pow3[9] + b->b[7] * pow3[1] + pop_digit[b->b[6]][1];
-    edge_2x += evaluate_arr[pattern_idx][idx];
+    edge_2x += evaluate_arr[0][idx];
     idx = pop_digit[b->b[9]][6] * pow3[9] + b->b[8] * pow3[1] + pop_digit[b->b[9]][1];
-    edge_2x += evaluate_arr[pattern_idx][idx];
+    edge_2x += evaluate_arr[0][idx];
     idx = pop_digit[b->b[14]][6] * pow3[9] + b->b[15] * pow3[1] + pop_digit[b->b[14]][1];
-    edge_2x += evaluate_arr[pattern_idx][idx];
-    double res = edge_2x / 4.0;
+    edge_2x += evaluate_arr[0][idx];
+
+    idx = b->b[0] / pow3[4] * pow3[6] + b->b[1] / pow3[5] * pow3[3] + b->b[2] / pow3[6] * pow3[1] + b->b[3] / pow3[7];
+    triangle += evaluate_arr[1][idx];
+    idx = b->b[15] / pow3[3] * pow3[6] + b->b[14] / pow3[5] * pow3[3] + b->b[13] / pow3[6] * pow3[1] + b->b[12] / pow3[7];
+    triangle += evaluate_arr[1][idx];
+    idx = b->b[7] / pow3[3] * pow3[6] + b->b[6] / pow3[5] * pow3[3] + b->b[5] / pow3[6] * pow3[1] + b->b[4] / pow3[7];
+    triangle += evaluate_arr[1][idx];
+    idx = pop_digit[b->b[7]][7] * pow3[9] + pop_digit[b->b[7]][6] * pow3[8] + pop_digit[b->b[7]][5] * pow3[7] + pop_digit[b->b[7]][4] * pow3[6]
+        + pop_digit[b->b[6]][7] * pow3[5] + pop_digit[b->b[6]][6] * pow3[4] + pop_digit[b->b[6]][5] * pow3[3]
+        + pop_digit[b->b[5]][7] * pow3[2] + pop_digit[b->b[5]][6] * pow3[1]
+        + pop_digit[b->b[4]][7];
+    triangle += evaluate_arr[1][idx];
+
+    res = edge_2x / 4.0 + triangle / 4.0;
     if (b->p == 1)
         res = -res;
     return min(0.9999, max(-0.9999, res));
