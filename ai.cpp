@@ -5,8 +5,6 @@
 
 // Egaroucid3
 
-// black: 0, white: 1
-
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -18,7 +16,7 @@
 
 using namespace std;
 
-#define tl 5000
+#define tl 150
 
 #define hw 8
 #define hw_m1 7
@@ -30,7 +28,7 @@ using namespace std;
 #define hw2_p1 65
 #define n_line 6561
 #define max_evaluate_idx 59049
-#define inf 2000000000.0
+#define inf 1000000000.0
 #define window 1e-10
 #define b_idx_num 38
 
@@ -677,19 +675,19 @@ inline double evaluate(const board *b){
 
     idx = b->b[0] / pow3[4] * pow3[6] + b->b[1] / pow3[5] * pow3[3] + b->b[2] / pow3[6] * pow3[1] + b->b[3] / pow3[7];
     triangle += evaluate_arr[phase_idx][8][idx];
-    idx = b->b[8] / pow3[4] * pow3[6] + b->b[9] / pow3[5] * pow3[3] + b->b[10] / pow3[6] * pow3[1] + b->b[11] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
-    idx = b->b[15] / pow3[3] * pow3[6] + b->b[14] / pow3[5] * pow3[3] + b->b[13] / pow3[6] * pow3[1] + b->b[12] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
     idx = reverse_board[b->b[0]] / pow3[4] * pow3[6] + reverse_board[b->b[1]] / pow3[5] * pow3[3] + reverse_board[b->b[2]] / pow3[6] * pow3[1] + reverse_board[b->b[3]] / pow3[7];
     triangle += evaluate_arr[phase_idx][8][idx];
-    idx = b->b[7] / pow3[3] * pow3[6] + b->b[6] / pow3[5] * pow3[3] + b->b[5] / pow3[6] * pow3[1] + b->b[4] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
-    idx = reverse_board[b->b[8]] / pow3[4] * pow3[6] + reverse_board[b->b[9]] / pow3[5] * pow3[3] + reverse_board[b->b[10]] / pow3[6] * pow3[1] + reverse_board[b->b[11]] / pow3[7];
+    idx = b->b[7] / pow3[4] * pow3[6] + b->b[6] / pow3[5] * pow3[3] + b->b[5] / pow3[6] * pow3[1] + b->b[4] / pow3[7];
     triangle += evaluate_arr[phase_idx][8][idx];
     idx = reverse_board[b->b[7]] / pow3[4] * pow3[6] + reverse_board[b->b[6]] / pow3[5] * pow3[3] + reverse_board[b->b[5]] / pow3[6] * pow3[1] + reverse_board[b->b[4]] / pow3[7];
     triangle += evaluate_arr[phase_idx][8][idx];
-    idx = reverse_board[b->b[15]] / pow3[3] * pow3[6] + reverse_board[b->b[14]] / pow3[5] * pow3[3] + reverse_board[b->b[13]] / pow3[6] * pow3[1] + reverse_board[b->b[12]] / pow3[7];
+    idx = b->b[8] / pow3[4] * pow3[6] + b->b[9] / pow3[5] * pow3[3] + b->b[10] / pow3[6] * pow3[1] + b->b[11] / pow3[7];
+    triangle += evaluate_arr[phase_idx][8][idx];
+    idx = reverse_board[b->b[8]] / pow3[4] * pow3[6] + reverse_board[b->b[9]] / pow3[5] * pow3[3] + reverse_board[b->b[10]] / pow3[6] * pow3[1] + reverse_board[b->b[11]] / pow3[7];
+    triangle += evaluate_arr[phase_idx][8][idx];
+    idx = b->b[15] / pow3[4] * pow3[6] + b->b[14] / pow3[5] * pow3[3] + b->b[13] / pow3[6] * pow3[1] + b->b[12] / pow3[7];
+    triangle += evaluate_arr[phase_idx][8][idx];
+    idx = reverse_board[b->b[15]] / pow3[4] * pow3[6] + reverse_board[b->b[14]] / pow3[5] * pow3[3] + reverse_board[b->b[13]] / pow3[6] * pow3[1] + reverse_board[b->b[12]] / pow3[7];
     triangle += evaluate_arr[phase_idx][8][idx];
 
     idx = b->b[0] / pow3[3] * pow3[5] + b->b[1] / pow3[3];
