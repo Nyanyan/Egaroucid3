@@ -11,3 +11,6 @@ book/cmd.txt
 book/cmd2.txt
 book/param
 book/third_party
+evaluation/param
+evaluation/third_party
+evaluation/data

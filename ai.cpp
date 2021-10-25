@@ -29,6 +29,7 @@ using namespace std;
 #define hw2_mhw 56
 #define hw2_p1 65
 #define n_line 6561
+#define max_evaluate_idx 59049
 #define inf 2000000000.0
 #define window 1e-10
 #define b_idx_num 38
@@ -40,6 +41,9 @@ using namespace std;
 
 #define search_hash_table_size 1048576
 #define search_hash_mask (search_hash_table_size - 1)
+
+#define n_dense0 32
+#define n_dense1 32
 
 struct board{
     int b[b_idx_num];
@@ -61,7 +65,7 @@ struct search_node{
 
 struct search_result{
     int policy;
-    int value;
+    double value;
     int depth;
 };
 
@@ -74,7 +78,7 @@ const int global_place[b_idx_num][hw] = {
     {2, 9, 16, -1, -1, -1, -1, -1},{3, 10, 17, 24, -1, -1, -1, -1},{4, 11, 18, 25, 32, -1, -1, -1},{5, 12, 19, 26, 33, 40, -1, -1},{6, 13, 20, 27, 34, 41, 48, -1},{7, 14, 21, 28, 35, 42, 49, 56},{15, 22, 29, 36, 43, 50, 57, -1},{23, 30, 37, 44, 51, 58, -1, -1},{31, 38, 45, 52, 59, -1, -1, -1},{39, 46, 53, 60, -1, -1, -1, -1},{47, 54, 61, -1, -1, -1, -1, -1}
 };
 vector<vector<int>> place_included;
-int pow3[hw], pow17[hw];
+int pow3[11], pow17[hw];
 int move_arr[2][n_line][hw][2];
 bool legal_arr[2][n_line][hw];
 int flip_arr[2][n_line][hw];
@@ -92,17 +96,15 @@ const double cell_weight[hw2] = {
     0.2880, -0.1150, 0.0000, -0.0096, -0.0096, 0.0000, -0.1150, 0.2880
 };
 int count_arr[n_line];
+int pop_digit[n_line][hw];
 
 vector<int> vacant_lst;
-
-unordered_map<char, int> char_keys;
 book_node *book[book_hash_table_size];
-const string book_chars = "!#$&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abc";
-string param_compressed1;
-
 search_node *search_replace_table[2][search_hash_table_size];
 int searched_nodes;
 int f_search_table_idx;
+//int edge_2x_idxes[8][10] = {{9, 0, 1, 2, 3, 4, 5, 6, 7, 14}, {9, 0, 8, 16, 24, 32, 40, 48, 56, 49}, {49, 56, 57, 58, 59, 60, 61, 62, 63, 54}, {54, 63, 55, 47, 39, 31, 23, 15, 7, 14}, {14, 7, 6, 5, 4, 3, 2, 1, 0, 9}, {49, 56, 48, 40, 32, 24, 16, 8, 0, 9}, {54, 63, 62, 61, 60, 59, 58, 57, 56, 49}, {14, 7, 15, 23, 31, 39, 47, 55, 63, 54}};
+double evaluate_arr[1][max_evaluate_idx];
 
 inline long long tim(){
     return chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -198,7 +200,7 @@ inline int move_line_half(const int p, const int o, const int place, const int k
 inline void init_pow(){
     int idx;
     pow3[0] = 1;
-    for (idx = 1; idx < hw; ++idx)
+    for (idx = 1; idx < 11; ++idx)
         pow3[idx] = pow3[idx- 1] * 3;
     pow17[0] = 1;
     for (idx = 1; idx < hw; ++idx)
@@ -291,6 +293,14 @@ inline void init_turn_board(){
     }
 }
 
+inline void init_pop_digit(){
+    int i, j;
+    for (i = 0; i < n_line; ++i){
+        for (j = 0; j < hw; ++j)
+            pop_digit[i][j] = (i / pow3[hw_m1 - j]) % 3;
+    }
+}
+
 inline board move(const board *b, const int global_place){
     board res;
     int j, place, g_place;
@@ -363,6 +373,9 @@ inline int get_book(const int *key){
 
 inline void init_book(){
     int i;
+    unordered_map<char, int> char_keys;
+    const string book_chars = "!#$&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abc";
+    string param_compressed1;
     for (i = 0; i < hw2; ++i)
         char_keys[book_chars[i]] = i;
     ifstream ifs("book/param/book.txt");
@@ -397,6 +410,95 @@ inline void init_book(){
         ++n_book;
     }
     cerr << n_book << " boards in book" << endl;
+}
+
+inline double leaky_relu(double x){
+    return max(0.01 * x, x);
+}
+
+inline double predict(int pattern_size, double in_arr[], double dense0[n_dense0][20], double bias0[n_dense0], double dense1[n_dense1][n_dense0], double bias1[n_dense1], double dense2[n_dense1], double bias2){
+    double hidden0[32], hidden1[32];
+    int i, j;
+    for (i = 0; i < n_dense0; ++i){
+        hidden0[i] = bias0[i];
+        for (j = 0; j < pattern_size * 2; ++j)
+            hidden0[i] += in_arr[j] * dense0[i][j];
+        hidden0[i] = leaky_relu(hidden0[i]);
+    }
+    for (i = 0; i < n_dense1; ++i){
+        hidden1[i] = bias1[i];
+        for (j = 0; j < n_dense0; ++j)
+            hidden1[i] += hidden0[j] * dense1[i][j];
+        hidden1[i] = leaky_relu(hidden1[i]);
+    }
+    double res = bias2;
+    for (i = 0; i < n_dense1; ++i)
+        res += hidden1[i] * dense2[i];
+    return res;
+}
+
+inline void pre_evaluation(int evaluate_idx, int pattern_size, double dense0[n_dense0][20], double bias0[n_dense0], double dense1[n_dense1][n_dense0], double bias1[n_dense1], double dense2[n_dense1], double bias2){
+    int idx, i, digit;
+    double arr[20];
+    for (idx = 0; idx < pow3[pattern_size]; ++idx){
+        for (i = 0; i < pattern_size; ++i){
+            digit = (idx / pow3[i]) % 3;
+            if (digit == 0){
+                arr[i] = 1.0;
+                arr[pattern_size + i] = 0.0;
+            } else if (digit == 1){
+                arr[i] = 0.0;
+                arr[pattern_size + i] = 1.0;
+            } else{
+                arr[i] = 0.0;
+                arr[pattern_size + i] = 0.0;
+            }
+        }
+        evaluate_arr[evaluate_idx][idx] = predict(pattern_size, arr, dense0, bias0, dense1, bias1, dense2, bias2);
+    }
+}
+
+inline void init_evaluation(){
+    ifstream ifs("evaluation/param/param.txt");
+    if (ifs.fail()){
+        cerr << "evaluation file not exist" << endl;
+        exit(1);
+    }
+    string line;
+    int i, j;
+    double dense0[n_dense0][20];
+    double bias0[n_dense0];
+    double dense1[n_dense1][n_dense0];
+    double bias1[n_dense1];
+    double dense2[n_dense1];
+    double bias2;
+    for (i = 0; i < 20; ++i){
+        for (j = 0; j < n_dense0; ++j){
+            getline(ifs, line);
+            dense0[j][i] = stof(line);
+        }
+    }
+    for (i = 0; i < n_dense0; ++i){
+        getline(ifs, line);
+        bias0[i] = stof(line);
+    }
+    for (i = 0; i < n_dense0; ++i){
+        for (j = 0; j < n_dense1; ++j){
+            getline(ifs, line);
+            dense1[j][i] = stof(line);
+        }
+    }
+    for (i = 0; i < n_dense1; ++i){
+        getline(ifs, line);
+        bias1[i] = stof(line);
+    }
+    for (i = 0; i < n_dense1; ++i){
+        getline(ifs, line);
+        dense2[i] = stof(line);
+    }
+    getline(ifs, line);
+    bias2 = stof(line);
+    pre_evaluation(0, 10, dense0, bias0, dense1, bias1, dense2, bias2);
 }
 
 inline void search_hash_table_init(const int table_idx){
@@ -461,7 +563,21 @@ inline double end_game(const board *b){
 }
 
 inline double evaluate(const board *b){
-    return end_game(b);
+    int pattern_idx = 0;
+    int idx;
+    double edge_2x = 0.0;
+    idx = pop_digit[b->b[1]][6] * pow3[9] + b->b[0] * pow3[1] + pop_digit[b->b[1]][1];
+    edge_2x += evaluate_arr[pattern_idx][idx];
+    idx = pop_digit[b->b[6]][6] * pow3[9] + b->b[7] * pow3[1] + pop_digit[b->b[6]][1];
+    edge_2x += evaluate_arr[pattern_idx][idx];
+    idx = pop_digit[b->b[9]][6] * pow3[9] + b->b[8] * pow3[1] + pop_digit[b->b[9]][1];
+    edge_2x += evaluate_arr[pattern_idx][idx];
+    idx = pop_digit[b->b[14]][6] * pow3[9] + b->b[15] * pow3[1] + pop_digit[b->b[14]][1];
+    edge_2x += evaluate_arr[pattern_idx][idx];
+    double res = edge_2x / 4.0;
+    if (b->p == 1)
+        res = -res;
+    return min(0.9999, max(-0.9999, res));
 }
 
 int move_ordering(const board p, const board q){
@@ -597,6 +713,7 @@ inline search_result search(const board b){
         ++depth;
     }
     cerr << "depth: " << res_depth + 1 << " searched nodes: " << searched_nodes << " nps: " << searched_nodes * 1000 / (tim() - strt) << endl;
+    cerr << "policy: " << policy << " value: " << value << endl;
     search_result res;
     res.policy = policy;
     res.value = value;
@@ -665,7 +782,9 @@ int main(){
     init_local_place();
     init_included();
     init_turn_board();
+    init_pop_digit();
     init_book();
+    init_evaluation();
     f_search_table_idx = 0;
     search_hash_table_init(f_search_table_idx);
     cerr << "iniitialized in " << tim() - strt << " ms" << endl;
