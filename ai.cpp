@@ -34,7 +34,7 @@ using namespace std;
 
 #define book_hash_table_size 16384
 #define book_hash_mask (book_hash_table_size - 1)
-#define book_stones 17
+#define book_stones 30
 #define ln_repair_book 27
 
 #define search_hash_table_size 1048576
@@ -414,10 +414,10 @@ inline void init_book(){
             }
             coord = char_keys[param_compressed1[data_idx++]];
             fb = move(&fb, coord);
-            //cerr << coord << endl;
-            //print_board(fb.b);
         }
         coord = char_keys[param_compressed1[data_idx++]];
+        //cerr << coord << endl;
+        //print_board(fb.b);
         register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, coord);
         ++n_book;
     }
@@ -658,17 +658,17 @@ inline double evaluate(const board *b){
 
     idx = pop_digit[b->b[1]][6] * pow3[9] + b->b[0] * pow3[1] + pop_digit[b->b[1]][1];
     edge_2x += evaluate_arr[phase_idx][7][idx];
-    idx = pop_digit[b->b[6]][6] * pow3[9] + b->b[7] * pow3[1] + pop_digit[b->b[6]][1];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
-    idx = pop_digit[b->b[9]][6] * pow3[9] + b->b[8] * pow3[1] + pop_digit[b->b[9]][1];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
-    idx = pop_digit[b->b[14]][6] * pow3[9] + b->b[15] * pow3[1] + pop_digit[b->b[14]][1];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[1]][1] * pow3[9] + reverse_board[b->b[0]] * pow3[1] + pop_digit[b->b[1]][6];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
+    idx = pop_digit[b->b[6]][6] * pow3[9] + b->b[7] * pow3[1] + pop_digit[b->b[6]][1];
     edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[6]][1] * pow3[9] + reverse_board[b->b[7]] * pow3[1] + pop_digit[b->b[6]][6];
     edge_2x += evaluate_arr[phase_idx][7][idx];
+    idx = pop_digit[b->b[9]][6] * pow3[9] + b->b[8] * pow3[1] + pop_digit[b->b[9]][1];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[9]][1] * pow3[9] + reverse_board[b->b[8]] * pow3[1] + pop_digit[b->b[9]][6];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
+    idx = pop_digit[b->b[14]][6] * pow3[9] + b->b[15] * pow3[1] + pop_digit[b->b[14]][1];
     edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[14]][1] * pow3[9] + reverse_board[b->b[15]] * pow3[1] + pop_digit[b->b[14]][6];
     edge_2x += evaluate_arr[phase_idx][7][idx];
@@ -752,7 +752,6 @@ double nega_alpha(board *b, const long long strt, int skip_cnt, int depth, doubl
         return end_game(b);
     if (depth == 0)
         return evaluate(b);
-    /*
     int hash = (int)(calc_hash(b->b) & search_hash_mask);
     pair<double, double> lu = get_search(b->b, hash, 1 - f_search_table_idx);
     if (lu.first != -inf){
@@ -768,7 +767,6 @@ double nega_alpha(board *b, const long long strt, int skip_cnt, int depth, doubl
             return beta;
     }
     double first_alpha = alpha;
-    */
     double g;
     board nb;
     bool passed = true;
@@ -782,8 +780,8 @@ double nega_alpha(board *b, const long long strt, int skip_cnt, int depth, doubl
                     return -inf;
                 alpha = max(alpha, g);
                 if (beta <= alpha){
-                    //if (lu.first < alpha)
-                    //    register_search(1 - f_search_table_idx, b->b, hash, alpha, lu.second);
+                    if (lu.first < alpha)
+                        register_search(1 - f_search_table_idx, b->b, hash, alpha, lu.second);
                     return alpha;
                 }
                 break;
@@ -794,12 +792,10 @@ double nega_alpha(board *b, const long long strt, int skip_cnt, int depth, doubl
         b->p = 1 - b->p;
         return -nega_alpha(b, strt, skip_cnt + 1, depth, -beta, -alpha);
     }
-    /*
     if (alpha <= first_alpha)
         register_search(1 - f_search_table_idx, b->b, hash, lu.first, alpha);
     else
         register_search(1 - f_search_table_idx, b->b, hash, alpha, alpha);
-    */
     return alpha;
 }
 
@@ -1048,7 +1044,7 @@ int main(){
             if (board_str == board_turns[i])
                 direction = i;
         }
-        int first_board[b_idx_num] = {6560, 6560, 6560, 6425, 6326, 6560, 6560, 6560, 6560, 6560, 6560, 6425, 6344, 6506, 6560, 6560, 6560, 6560, 6560, 6560, 6344, 6425, 6398, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6479, 6344, 6398, 6074, 6560, 6560, 6560};
+        const int first_board[b_idx_num] = {6560, 6560, 6560, 6425, 6326, 6560, 6560, 6560, 6560, 6560, 6560, 6425, 6344, 6506, 6560, 6560, 6560, 6560, 6560, 6560, 6344, 6425, 6398, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6479, 6344, 6398, 6074, 6560, 6560, 6560};
         policy = get_book(first_board);
         cerr << "FIRST direction " << direction << endl;
         cerr << "book policy " << policy << endl;
