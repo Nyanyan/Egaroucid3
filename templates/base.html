@@ -10,8 +10,8 @@
     <body>
         <div class="title">Egaroucid 3 - Othello AI</div>
         <p align="center">
-            <input type="radio" class="radio_size" name="ai_player" value="1" id="white" checked><label for="white" class="setting">黒(先手): あなた 白(後手): AI</label>
-            <input type="radio" class="radio_size" name="ai_player" value="0" id="black"><label for="black" class="setting">黒(先手): AI 白(後手): あなた</label>
+            <input type="radio" class="radio_size" name="ai_player" value="1" id="white" checked><label for="white" class="setting">Black (initial): You White: AI</label>
+            <input type="radio" class="radio_size" name="ai_player" value="0" id="black"><label for="black" class="setting">Black (initial): AI White: You</label>
         </p>
         <div align="center">
             <input type="submit" class="setting" value="対局開始" onclick="start()" id="start">
@@ -38,10 +38,10 @@
             </table>
         </div>
         <div id="info" align="center">
-            <div class="sub_title">対局情報</div>
-            <div class="sub_sub_title">予想勝率グラフ</div>
+            <div class="sub_title">Information of this game</div>
+            <div class="sub_sub_title">Probability of AI's win</div>
             <canvas id="graph"></canvas>
-            <div class="sub_sub_title">棋譜</div>
+            <div class="sub_sub_title">Game Record</div>
             <div class="record" id="record"></div>
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.js"></script>
