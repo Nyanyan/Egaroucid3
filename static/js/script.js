@@ -45,9 +45,9 @@ var graph = new Chart(ctx, {
         scales: {
             yAxes: [{
             ticks: {
-                suggestedMax: 1.0,
-                suggestedMin: -1.0,
-                stepSize: 0.2,
+                suggestedMax: 110.0,
+                suggestedMin: -10.0,
+                stepSize: 10.0,
                 callback: function(value, index, values){
                     return  value
                 }
@@ -86,11 +86,8 @@ function start() {
         dataType: "json",
     }).done(function(data) {
         show(-1, -1);
-        if (ai_player == 0) {
-            ai();
-        }
     }).fail(function(data) {
-        alert("[ERROR] connection failed click OK to try again");
+        alert("[ERROR] cannot start click OK to try again");
         setTimeout(start(), "300");
     });
 }
@@ -155,7 +152,9 @@ function show(r, c) {
     } else {
         table.rows[0].cells[0].firstChild.className = "state_blank";
         table.rows[0].cells[6].firstChild.className = "state_blank";
-        end_game();
+    }
+    if (player == ai_player){
+        ai();
     }
 }
 
@@ -284,9 +283,6 @@ function ai() {
             data_json[y * hw + x] = grid[y][x];
         }
     }
-    //data_json["ai_player"] = ai_player;
-    //data_json["tl"] = tl;
-    //data_json["direction"] = direction;
     $.ajax({
         type: "POST",
         url: "/ai",
@@ -375,13 +371,6 @@ function move(y, x) {
     show(y, x);
 }
 
-function ai_check() {
-    if (player == ai_player) {
-        ai();
-    }
-}
-setInterval(ai_check, 250);
-
 function update_record() {
     var record_html = document.getElementById('record');
     var new_coord = String.fromCharCode(65 + record[record.length - 1][1]) + String.fromCharCode(49 + record[record.length - 1][0]);
@@ -392,21 +381,4 @@ function update_graph(s) {
     graph.data.labels.push(record.length);
     graph.data.datasets[0].data.push(s);
     graph.update();
-}
-
-function end_game() {
-    let stones = [0, 0];
-    for (var y = 0; y < hw; ++y) {
-        for (var x = 0; x < hw; ++x) {
-            if (0 <= grid[y][x] <= 1) {
-                ++stones[grid[y][x]];
-            }
-        }
-    }
-    html2canvas(document.getElementById('main'),{
-        onrendered: function(canvas){
-            var imgData = canvas.toDataURL();
-            document.getElementById("game_result").src = imgData;
-        }
-    });
 }

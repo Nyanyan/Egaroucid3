@@ -7,7 +7,8 @@ from time import sleep, time
 hw = 8
 
 app = Flask(__name__)
-ai = None
+
+ai = subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 @app.route('/')
 def index():
@@ -15,11 +16,10 @@ def index():
 
 @app.route("/start", methods=["POST"])
 def start_game():
-    global ai
-    ai = subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     req = dict(request.form)
     print(req)
     stdin = req["ai_player"] + '\n'
+    print('stdin', stdin)
     ai.stdin.write(stdin.encode('utf-8'))
     ai.stdin.flush()
     print('START', flush=True)

@@ -892,27 +892,37 @@ inline search_result search(const board b){
     int tmp_policy, i;
     double alpha, beta, g, value;
     searched_nodes = 0;
+    bool break_flag = false;
     while (tim() - strt < tl){
         alpha = -1.5;
         beta = 1.5;
         search_hash_table_init(1 - f_search_table_idx);
         if (canput > 2)
             sort(nb.begin(), nb.end(), move_ordering);
-        alpha = max(alpha, -nega_scout(&nb[canput - 1], strt, 0, depth, depth, -beta, -alpha));
+        g = -nega_scout(&nb[canput - 1], strt, 0, depth, depth, -beta, -alpha);
+        if (g == inf)
+            break;
+        alpha = max(alpha, g);
         tmp_policy = nb[canput - 1].policy;
         for (i = canput - 2; i >= 0; --i){
             g = -nega_scout(&nb[i], strt, 0, depth, depth, -alpha - window, -alpha);
-            if (g == inf)
+            if (g == inf){
+                break_flag = true;
                 break;
+            }
             if (alpha < g){
                 g = -nega_scout(&nb[i], strt, 0, depth, depth, -beta, -g);
+                if (g == inf){
+                    break_flag = true;
+                    break;
+                }
                 if (alpha < g){
                     alpha = g;
                     tmp_policy = nb[i].policy;
                 }
             }
         }
-        if (i == -1){
+        if (!break_flag){
             f_search_table_idx = 1 - f_search_table_idx;
             policy = tmp_policy;
             value = alpha;
@@ -1007,7 +1017,7 @@ int main(){
         policy = 37;
         cerr << "FIRST direction " << direction << endl; 
         cerr << "book policy " << policy << endl;
-        cout << coord_str(policy, direction) << endl;
+        cout << coord_str(policy, direction) << " " << 50 << endl;
     } else {
         string board_turns[4] = {
             "...........................10......000..........................",
