@@ -14,6 +14,10 @@ https://github.com/Nyanyan/Reversi
 
 https://github.com/Nyanyan/Egaroucid
 
+![img0](https://github.com/Nyanyan/Egaroucid3/blob/master/img0.png)
+
+![img0](https://github.com/Nyanyan/Egaroucid3/blob/master/img1.png)
+
 
 
 ## Requirements
