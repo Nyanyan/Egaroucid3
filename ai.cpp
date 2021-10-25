@@ -18,7 +18,7 @@
 
 using namespace std;
 
-#define tl 145
+#define tl 500
 
 #define hw 8
 #define hw_m1 7
@@ -717,18 +717,32 @@ inline double evaluate(const board *b){
 }
 
 bool move_ordering(const board p, const board q){
-    double pl = get_search(p.b, calc_hash(p.b) & search_hash_mask, f_search_table_idx).first;
-    double ql = get_search(q.b, calc_hash(q.b) & search_hash_mask, f_search_table_idx).first;
-    if (pl != -inf){
-        if (ql != -inf)
-            return pl < ql;
-        else
-            return false;
+    double pu = get_search(p.b, calc_hash(p.b) & search_hash_mask, f_search_table_idx).second;
+    double qu = get_search(q.b, calc_hash(q.b) & search_hash_mask, f_search_table_idx).second;
+    if (p.p == 0){
+        if (pu != -inf){
+            if (qu != -inf)
+                return pu > qu;
+            else
+                return true;
+        } else{
+            if (qu != -inf)
+                return false;
+            else
+                return evaluate(&p) > evaluate(&q);
+        }
     } else{
-        if (ql != -inf)
-            return true;
-        else
-            return evaluate(&p) < evaluate(&q);
+        if (pu != -inf){
+            if (qu != -inf)
+                return pu < qu;
+            else
+                return true;
+        } else{
+            if (qu != -inf)
+                return false;
+            else
+                return evaluate(&p) < evaluate(&q);
+        }
     }
 }
 
@@ -899,12 +913,12 @@ inline search_result search(const board b){
         search_hash_table_init(1 - f_search_table_idx);
         if (canput > 2)
             sort(nb.begin(), nb.end(), move_ordering);
-        g = -nega_scout(&nb[canput - 1], strt, 0, depth, depth, -beta, -alpha);
+        g = -nega_scout(&nb[0], strt, 0, depth, depth, -beta, -alpha);
         if (g == inf)
             break;
         alpha = max(alpha, g);
-        tmp_policy = nb[canput - 1].policy;
-        for (i = canput - 2; i >= 0; --i){
+        tmp_policy = nb[0].policy;
+        for (i = 1; i < canput; ++i){
             g = -nega_scout(&nb[i], strt, 0, depth, depth, -alpha - window, -alpha);
             if (g == inf){
                 break_flag = true;
@@ -927,6 +941,7 @@ inline search_result search(const board b){
             policy = tmp_policy;
             value = alpha;
             res_depth = depth;
+            cerr << depth << " " << alpha << " " << searched_nodes << endl;
             if (fabs(value) == 1.0)
                 break;
             ++depth;
@@ -964,7 +979,7 @@ inline int input_board(int (&board)[b_idx_num], int direction){
     for (i = 0; i < hw; ++i){
         string raw_board;
         cin >> raw_board; cin.ignore();
-        cerr << raw_board << endl;
+        //cerr << raw_board << endl;
         for (j = 0; j < hw; ++j){
             elem = raw_board[j];
             if (elem != '.'){
