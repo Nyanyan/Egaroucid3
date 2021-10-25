@@ -18,8 +18,8 @@ import os
 
 inf = 10000000.0
 
-min_n_stones = 4 + 50
-max_n_stones = 4 + 60
+min_n_stones = 4 + 30
+max_n_stones = 4 + 40
 game_num = 100000
 test_ratio = 0.1
 n_epochs = 200
@@ -64,9 +64,16 @@ triangle_idx = [
     [56, 57, 58, 59, 48, 49, 50, 40, 41, 32], [56, 48, 40, 32, 57, 49, 41, 58, 50, 59]
 ]
 
+corner25_idx = [
+    [0, 1, 2, 3, 4, 8, 9, 10, 11, 12],[0, 8, 16, 24, 32, 1, 9, 17, 25, 33],
+    [7, 6, 5, 4, 3, 15, 14, 13, 12, 11],[7, 15, 23, 31, 39, 6, 14, 22, 30, 38],
+    [56, 57, 58, 59, 60, 48, 49, 50, 51, 52],[56, 48, 40, 32, 24, 57, 49, 41, 33, 25],
+    [63, 62, 61, 60, 59, 55, 54, 53, 52, 51],[63, 55, 47, 39, 31, 62, 54, 46, 38, 30]
+]
 
-#pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx]
-pattern_idx = [edge_2x_idx, triangle_idx]
+
+pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, corner25_idx]
+#pattern_idx = [edge_2x_idx, triangle_idx]
 all_data = [[] for _ in range(len(pattern_idx))]
 all_labels = []
 
@@ -135,8 +142,8 @@ def LeakyReLU(x):
 y_all = None
 x = [None for _ in range(len(pattern_idx))]
 y_all = None
-#names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle']
-names = ['edge2x', 'triangle']
+names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle', 'corner25']
+#names = ['edge2x', 'triangle']
 for i in range(len(pattern_idx)):
     x[i] = Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in')
     y = Dense(32)(x[i])

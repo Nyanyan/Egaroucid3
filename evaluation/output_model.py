@@ -28,7 +28,18 @@ def get_layer_index(model, layer_name, not_found=None):
 
 model = load_model('learned_data/' + sys.argv[1])
 
-names = ['dense', 'dense_1', 'edge2x_out', 'dense_2', 'dense_3', 'triangle_out']
+names = [
+    'dense', 'dense_1', 'line2_out',            # 0
+    'dense_2', 'dense_3', 'line3_out',          # 1
+    'dense_4', 'dense_5', 'line4_out',          # 2
+    'dense_6', 'dense_7', 'diagonal5_out',      # 3
+    'dense_8', 'dense_9', 'diagonal6_out',      # 4
+    'dense_10', 'dense_11', 'diagonal7_out',    # 5
+    'dense_12', 'dense_13', 'diagonal8_out',    # 6
+    'dense_14', 'dense_15', 'edge2X_out',       # 7
+    'dense_16', 'dense_17', 'triangle_out',     # 8
+    'dense_18', 'dense_19', 'corner25_out'      # 9
+]
 
 with open('learned_data/' + sys.argv[2], 'w') as f:
     for name in names:
