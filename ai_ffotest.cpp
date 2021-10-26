@@ -729,38 +729,36 @@ bool move_ordering(const board p, const board q){
     return p.v > q.v;
 }
 
-double final_move(const board *b){
+double final_move(const board *b, bool skipped){
     ++searched_nodes;
     int before_score = 0;
     for (int i = 0; i < hw; ++i)
         before_score += count_arr[b->b[i]];
     if (b->p == 1)
         before_score = -before_score;
-    if (before_score > 0)
-        return 1.0;
     int score;
     for (const int &cell: vacant_lst){
         if (pop_digit[b->b[cell / hw]][cell % hw] == 2){
-            score = before_score;
+            score = before_score + 1;
             for (const int &idx: place_included[cell])
                 score += (move_arr[b->p][b->b[idx]][local_place[idx][cell]][0] + move_arr[b->p][b->b[idx]][local_place[idx][cell]][1]) * 2;
-            if (score > before_score)
-                ++score;
-            if (score > 0)
-                return 1.0;
             break;
         }
     }
-    if (score == before_score){
+    if (score == before_score + 1){
+        if (skipped)
+            return before_score;
         board rb;
         for (int i = 0; i < b_idx_num; ++i)
             rb.b[i] = b->b[i];
         rb.p = 1 - b->p;
         rb.n = b->n;
-        return -final_move(&rb);
+        return -final_move(&rb, true);
     }
     //return score;
-    if (score == 0)
+    if (score > 0)
+        return 1.0;
+    else if (score == 0)
         return 0.0;
     return -1.0;
 }
@@ -768,9 +766,9 @@ double final_move(const board *b){
 double nega_alpha_final(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
     ++searched_nodes;
     if (b->n == hw2_m1)
-        return final_move(b);
+        return final_move(b, false);
     if (skip_cnt == 2)
-        return end_game_stones(b);
+        return end_game(b);
     board nb;
     bool passed = true;
     for (const int &cell: vacant_lst){
@@ -802,7 +800,7 @@ double nega_alpha_ordering_final(const board *b, const long long strt, int skip_
     if (depth <= 7)
         return nega_alpha_final(b, strt, skip_cnt, depth, alpha, beta);
     if (skip_cnt == 2)
-        return end_game_stones(b);
+        return end_game(b);
     ++searched_nodes;
     vector<board> nb;
     int canput = 0;
@@ -845,7 +843,7 @@ double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth,
         return -inf;
     ++searched_nodes;
     if (b->n == hw2_m1)
-        return final_move(b);
+        return final_move(b, false);
     if (skip_cnt == 2 || b->n == hw2)
         return end_game(b);
     if (depth == 0 && b->n < hw2)
