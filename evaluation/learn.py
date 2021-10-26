@@ -20,9 +20,10 @@ inf = 10000000.0
 
 min_n_stones = 4 + 50
 max_n_stones = 4 + 60
-game_num = 200000
+game_num = 50000 #117000
 test_ratio = 0.1
 n_epochs = 200
+one_board_num = 1
 
 
 line2_idx = [[8, 9, 10, 11, 12, 13, 14, 15], [1, 9, 17, 25, 33, 41, 49, 57], [6, 14, 22, 30, 38, 46, 54, 62], [48, 49, 50, 51, 52, 53, 54, 55]] # line2
@@ -89,14 +90,15 @@ def calc_idx(board, patterns):
 
 def make_lines(board, patterns):
     res = []
-    pattern = patterns[randrange(0, 8)]
-    #for pattern in patterns:
-    tmp = []
-    for elem in pattern:
-        tmp.append(1.0 if board[elem] == '0' else 0.0)
-    for elem in pattern:
-        tmp.append(1.0 if board[elem] == '1' else 0.0)
-    res.append(tmp)
+    for _ in range(one_board_num):
+        pattern = patterns[randrange(0, 8)]
+        #for pattern in patterns:
+        tmp = []
+        for elem in pattern:
+            tmp.append(1.0 if board[elem] == '0' else 0.0)
+        for elem in pattern:
+            tmp.append(1.0 if board[elem] == '1' else 0.0)
+        res.append(tmp)
     return res
 
 def digit(n, r):
@@ -113,11 +115,12 @@ def calc_n_stones(board):
     return res
 
 def collect_data(num):
-    global all_data
+    global all_data, all_labels
     try:
         with open('data/' + digit(num, 7) + '.txt', 'r') as f:
             data = list(f.read().splitlines())
     except:
+        print('cannot open')
         return
     for datum in data:
         board, score = datum.split()
@@ -132,8 +135,10 @@ def collect_data(num):
             '''
             for i in range(len(pattern_idx)):
                 lines = make_lines(board, pattern_idx[i])
-                all_data[i].append(lines[0])
-            all_labels.append(score)
+                for line in lines:
+                    all_data[i].append(line)
+            for _ in range(one_board_num):
+                all_labels.append(score)
             
 
 def LeakyReLU(x):
@@ -148,7 +153,7 @@ for i in range(len(pattern_idx)):
     x[i] = Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in')
     y = Dense(18)(x[i])
     y = Lambda(lambda xx: LeakyReLU(xx))(y)
-    y = Dense(16)(y)
+    y = Dense(18)(y)
     y = Lambda(lambda xx: LeakyReLU(xx))(y)
     y = Dense(1, name=names[i] + '_out')(y)
     if i == 0:
@@ -161,7 +166,7 @@ plot_model(model, to_file='model.png', show_shapes=True)
 
 for i in trange((game_num + 999) // 1000):
     collect_data(i)
-len_data = len(all_data[0])
+len_data = len(all_labels)
 print(len_data)
 all_data = [np.array(arr) for arr in all_data]
 all_labels = np.array(all_labels)

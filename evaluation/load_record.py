@@ -191,11 +191,12 @@ def collect_data(num, s):
 
 
 games = []
-for year in reversed(range(2000, 2019 + 1)):
+for year in reversed(range(1990, 2019 + 1)):
     raw_data = ''
     with open('third_party/records/' + str(year) + '.csv', 'r', encoding='utf-8-sig') as f:
         raw_data = f.read()
     games.extend([i for i in raw_data.splitlines()])
+print(len(games))
 dict_data = {}
 idx = 0
 for i in trange(len(games)):
