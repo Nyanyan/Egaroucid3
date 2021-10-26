@@ -794,7 +794,7 @@ double nega_alpha_final(const board *b, const long long strt, int skip_cnt, int 
     return alpha;
 }
 
-double nega_alpha_move_ordering_final(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
+double nega_alpha_ordering_final(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
     if (depth <= 6)
         return nega_alpha_final(b, strt, skip_cnt, depth, alpha, beta);
     ++searched_nodes;
@@ -822,13 +822,13 @@ double nega_alpha_move_ordering_final(const board *b, const long long strt, int 
             rb.b[i] = b->b[i];
         rb.p = 1 - b->p;
         rb.n = b->n;
-        return -nega_alpha_move_ordering_final(&rb, strt, skip_cnt + 1, depth, -beta, -alpha);
+        return -nega_alpha_ordering_final(&rb, strt, skip_cnt + 1, depth, -beta, -alpha);
     }
     if (canput > 2)
         sort(nb.begin(), nb.end(), move_ordering);
     double v = -inf, g;
     for (int i = 0; i < canput; ++i){
-        g = -nega_alpha_move_ordering_final(&nb[i], strt, 0, depth - 1, -beta, -alpha);
+        g = -nega_alpha_ordering_final(&nb[i], strt, 0, depth - 1, -beta, -alpha);
         if (g == inf)
             return -inf;
         if (beta <= g)
@@ -906,10 +906,10 @@ double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth,
     return alpha;
 }
 
-double nega_alpha_move_ordering(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
+double nega_alpha_ordering(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
     if (tim() - strt > tl)
         return -inf;
-    if (depth <= 6)
+    if (depth <= 7)
         return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
     ++searched_nodes;
     if (skip_cnt == 2 || b->n == hw2)
@@ -954,13 +954,13 @@ double nega_alpha_move_ordering(const board *b, const long long strt, int skip_c
             rb.b[i] = b->b[i];
         rb.p = 1 - b->p;
         rb.n = b->n;
-        return -nega_alpha_move_ordering(&rb, strt, skip_cnt + 1, depth, -beta, -alpha);
+        return -nega_alpha_ordering(&rb, strt, skip_cnt + 1, depth, -beta, -alpha);
     }
     if (canput > 2)
         sort(nb.begin(), nb.end(), move_ordering);
     double v = -inf, g;
     for (int i = 0; i < canput; ++i){
-        g = -nega_alpha_move_ordering(&nb[i], strt, 0, depth - 1, -beta, -alpha);
+        g = -nega_alpha_ordering(&nb[i], strt, 0, depth - 1, -beta, -alpha);
         if (g == inf)
             return -inf;
         if (beta <= g){
@@ -981,7 +981,7 @@ double nega_alpha_move_ordering(const board *b, const long long strt, int skip_c
 double nega_scout(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
     if (tim() - strt > tl)
         return -inf;
-    if (depth <= 5)
+    if (depth <= 7)
         return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
     ++searched_nodes;
     if (skip_cnt == 2 || b->n == hw2)
@@ -1042,7 +1042,7 @@ double nega_scout(const board *b, const long long strt, int skip_cnt, int depth,
     v = g;
     alpha = max(alpha, g);
     for (int i = 1; i < canput; ++i){
-        g = -nega_alpha_move_ordering_final(&nb[i], strt, 0, depth - 1, -alpha - window, -alpha);
+        g = -nega_alpha_ordering(&nb[i], strt, 0, depth - 1, -alpha - window, -alpha);
         if (g == inf)
             return -inf;
         if (beta <= g){
@@ -1119,7 +1119,7 @@ inline search_result search(const board b){
             alpha = max(alpha, g);
             tmp_policy = nb[0].policy;
             for (i = 1; i < canput; ++i){
-                g = -nega_alpha_move_ordering(&nb[i], strt, 0, depth, -alpha - window, -alpha);
+                g = -nega_alpha_ordering(&nb[i], strt, 0, depth, -alpha - window, -alpha);
                 if (g == inf){
                     break_flag = true;
                     break;
@@ -1138,7 +1138,7 @@ inline search_result search(const board b){
             }
         } else{
             for (i = 0; i < canput; ++i){
-                g = -nega_alpha_move_ordering(&nb[i], strt, 0, depth, -beta, -alpha);
+                g = -nega_alpha_ordering(&nb[i], strt, 0, depth, -beta, -alpha);
                 if (g == inf){
                     break_flag = true;
                     break;
