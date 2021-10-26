@@ -716,6 +716,21 @@ inline double evaluate(const board *b){
     return min(0.9999, max(-0.9999, res));
 }
 
+double canput_exact_evaluate(board *b){
+    int res = 0;
+    for (const int &cell: vacant_lst){
+        if (pop_digit[b->b[cell / hw]][cell % hw] == 2){
+            for (const int &idx: place_included[cell]){
+                if (move_arr[b->p][b->b[idx]][local_place[idx][cell]][0] || move_arr[b->p][b->b[idx]][local_place[idx][cell]][1]){
+                    ++res;
+                    break;
+                }
+            }
+        }
+    }
+    return (double)res;
+}
+
 bool move_ordering(const board p, const board q){
     return p.v > q.v;
 }
@@ -788,10 +803,10 @@ double nega_alpha_final(const board *b, const long long strt, int skip_cnt, int 
 }
 
 double nega_alpha_ordering_final(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
-    if (depth <= 7)
-        return nega_alpha_final(b, strt, skip_cnt, depth, alpha, beta);
     if (skip_cnt == 2)
         return end_game(b);
+    if (depth <= 7)
+        return nega_alpha_final(b, strt, skip_cnt, depth, alpha, beta);
     ++searched_nodes;
     vector<board> nb;
     int canput = 0;
@@ -800,11 +815,7 @@ double nega_alpha_ordering_final(const board *b, const long long strt, int skip_
             for (const int &idx: place_included[cell]){
                 if (move_arr[b->p][b->b[idx]][local_place[idx][cell]][0] || move_arr[b->p][b->b[idx]][local_place[idx][cell]][1]){
                     nb.push_back(move(b, cell));
-                    nb[canput].v = get_search(nb[canput].b, calc_hash(nb[canput].b) & search_hash_mask, f_search_table_idx).second;
-                    if (nb[canput].v == -inf)
-                        nb[canput].v = -evaluate(&nb[canput]) - 1000.0;
-                    else if (b->p == 1)
-                        nb[canput].v = -nb[canput].v;
+                    nb[canput].v = -canput_exact_evaluate(&nb[canput]);
                     ++canput;
                     break;
                 }
@@ -873,13 +884,13 @@ double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth,
 double nega_alpha_ordering(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
     if (tim() - strt > tl)
         return -inf;
-    if (depth <= 7)
-        return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
     ++searched_nodes;
     if (skip_cnt == 2 || b->n == hw2)
         return end_game(b);
     if (depth == 0 && b->n < hw2)
         return evaluate(b);
+    if (depth <= 3)
+        return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
     int hash = (int)(calc_hash(b->b) & search_hash_mask);
     pair<double, double> lu = get_search(b->b, hash, 1 - f_search_table_idx);
     if (lu.first != -inf){
@@ -945,13 +956,13 @@ double nega_alpha_ordering(const board *b, const long long strt, int skip_cnt, i
 double nega_scout(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
     if (tim() - strt > tl)
         return -inf;
-    if (depth <= 7)
-        return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
     ++searched_nodes;
     if (skip_cnt == 2 || b->n == hw2)
         return end_game(b);
     if (depth == 0 && b->n < hw2)
         return evaluate(b);
+    if (depth <= 3)
+        return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
     int hash = (int)(calc_hash(b->b) & search_hash_mask);
     pair<double, double> lu = get_search(b->b, hash, 1 - f_search_table_idx);
     if (lu.first != -inf){
@@ -1016,17 +1027,15 @@ double nega_scout(const board *b, const long long strt, int skip_cnt, int depth,
         }
         if (alpha < g){
             alpha = g;
-            if (alpha + window <= g){
-                g = -nega_scout(&nb[i], strt, 0, depth - 1, -beta, -alpha);
-                if (g == inf)
-                    return -inf;
-                if (beta <= g){
-                    if (lu.first < g)
-                        register_search(1 - f_search_table_idx, b->b, hash, g, lu.second);
-                    return g;
-                }
-                alpha = max(alpha, g);
+            g = -nega_scout(&nb[i], strt, 0, depth - 1, -beta, -alpha);
+            if (g == inf)
+                return -inf;
+            if (beta <= g){
+                if (lu.first < g)
+                    register_search(1 - f_search_table_idx, b->b, hash, g, lu.second);
+                return g;
             }
+            alpha = max(alpha, g);
         }
         v = max(v, g);
     }
