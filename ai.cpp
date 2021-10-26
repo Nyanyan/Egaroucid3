@@ -1060,8 +1060,8 @@ inline search_result search(const board b){
     searched_nodes = 0;
     bool break_flag = false;
     while (tim() - strt < tl){
-        alpha = -1.0;
-        beta = 1.0;
+        alpha = -1.5;
+        beta = 1.5;
         search_hash_table_init(1 - f_search_table_idx);
         for (i = 0; i < canput; ++i){
             nb[i].v = get_search(nb[i].b, calc_hash(nb[i].b) & search_hash_mask, f_search_table_idx).second;
