@@ -579,6 +579,15 @@ inline double end_game(const board *b){
     return 0.0;
 }
 
+inline double end_game_stones(const board *b){
+    int count = 0;
+    for (int idx = 0; idx < hw; ++idx)
+        count += count_arr[b->b[idx]];
+    if (b->p == 1)
+        count = -count;
+    return (double)count;
+}
+
 inline int calc_phase_idx(const board *b){
     int turn = -4;
     for (int idx = 0; idx < hw; ++idx)
@@ -721,6 +730,7 @@ bool move_ordering(const board p, const board q){
 }
 
 double final_move(const board *b){
+    ++searched_nodes;
     int before_score = 0;
     for (int i = 0; i < hw; ++i)
         before_score += count_arr[b->b[i]];
@@ -728,24 +738,20 @@ double final_move(const board *b){
         before_score = -before_score;
     if (before_score > 0)
         return 1.0;
-    int score, max_score = -inf;
-    bool passed = true;
+    int score;
     for (const int &cell: vacant_lst){
         if (pop_digit[b->b[cell / hw]][cell % hw] == 2){
             score = before_score;
-            for (const int &idx: place_included[cell]){
-                passed = false;
+            for (const int &idx: place_included[cell])
                 score += (move_arr[b->p][b->b[idx]][local_place[idx][cell]][0] + move_arr[b->p][b->b[idx]][local_place[idx][cell]][1]) * 2;
-            }
             if (score > before_score)
                 ++score;
-            //if (score > 0)
-            //    return 1.0;
-            max_score = max(max_score, score);
+            if (score > 0)
+                return 1.0;
             break;
         }
     }
-    if (passed){
+    if (score == before_score){
         board rb;
         for (int i = 0; i < b_idx_num; ++i)
             rb.b[i] = b->b[i];
@@ -753,8 +759,8 @@ double final_move(const board *b){
         rb.n = b->n;
         return -final_move(&rb);
     }
-    return max_score;
-    if (max_score == 0)
+    //return score;
+    if (score == 0)
         return 0.0;
     return -1.0;
 }
@@ -763,7 +769,8 @@ double nega_alpha_final(const board *b, const long long strt, int skip_cnt, int 
     ++searched_nodes;
     if (b->n == hw2_m1)
         return final_move(b);
-    double g;
+    if (skip_cnt == 2)
+        return end_game_stones(b);
     board nb;
     bool passed = true;
     for (const int &cell: vacant_lst){
@@ -772,10 +779,7 @@ double nega_alpha_final(const board *b, const long long strt, int skip_cnt, int 
                 if (move_arr[b->p][b->b[idx]][local_place[idx][cell]][0] || move_arr[b->p][b->b[idx]][local_place[idx][cell]][1]){
                     passed = false;
                     nb = move(b, cell);
-                    g = -nega_alpha_final(&nb, strt, 0, depth - 1, -beta, -alpha);
-                    if (g == inf)
-                        return -inf;
-                    alpha = max(alpha, g);
+                    alpha = max(alpha, -nega_alpha_final(&nb, strt, 0, depth - 1, -beta, -alpha));
                     if (beta <= alpha)
                         return alpha;
                     break;
@@ -795,8 +799,10 @@ double nega_alpha_final(const board *b, const long long strt, int skip_cnt, int 
 }
 
 double nega_alpha_ordering_final(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
-    if (depth <= 6)
+    if (depth <= 7)
         return nega_alpha_final(b, strt, skip_cnt, depth, alpha, beta);
+    if (skip_cnt == 2)
+        return end_game_stones(b);
     ++searched_nodes;
     vector<board> nb;
     int canput = 0;
@@ -826,17 +832,12 @@ double nega_alpha_ordering_final(const board *b, const long long strt, int skip_
     }
     if (canput > 2)
         sort(nb.begin(), nb.end(), move_ordering);
-    double v = -inf, g;
     for (int i = 0; i < canput; ++i){
-        g = -nega_alpha_ordering_final(&nb[i], strt, 0, depth - 1, -beta, -alpha);
-        if (g == inf)
-            return -inf;
-        if (beta <= g)
-            return g;
-        alpha = max(alpha, g);
-        v = max(v, g);
+        alpha = max(alpha, -nega_alpha_ordering_final(&nb[i], strt, 0, depth - 1, -beta, -alpha));
+        if (beta <= alpha)
+            return alpha;
     }
-    return v;
+    return alpha;
 }
 
 double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
@@ -849,23 +850,6 @@ double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth,
         return end_game(b);
     if (depth == 0 && b->n < hw2)
         return evaluate(b);
-    /*
-    int hash = (int)(calc_hash(b->b) & search_hash_mask);
-    pair<double, double> lu = get_search(b->b, hash, 1 - f_search_table_idx);
-    if (lu.first != -inf){
-        if (lu.first == lu.second)
-            return lu.first;
-        alpha = max(alpha, lu.first);
-        if (alpha >= beta)
-            return alpha;
-    }
-    if (lu.second != -inf){
-        beta = min(beta, lu.second);
-        if (alpha >= beta)
-            return beta;
-    }
-    double first_alpha = alpha;
-    */
     double g;
     board nb;
     bool passed = true;
@@ -879,11 +863,8 @@ double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth,
                     if (g == inf)
                         return -inf;
                     alpha = max(alpha, g);
-                    if (beta <= alpha){
-                        //if (lu.first < alpha)
-                        //    register_search(1 - f_search_table_idx, b->b, hash, alpha, lu.second);
+                    if (beta <= alpha)
                         return alpha;
-                    }
                     break;
                 }
             }
@@ -897,12 +878,6 @@ double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth,
         rb.n = b->n;
         return -nega_alpha(&rb, strt, skip_cnt + 1, depth, -beta, -alpha);
     }
-    /*
-    if (alpha <= first_alpha)
-        register_search(1 - f_search_table_idx, b->b, hash, lu.first, alpha);
-    else
-        register_search(1 - f_search_table_idx, b->b, hash, alpha, alpha);
-    */
     return alpha;
 }
 
@@ -1098,10 +1073,10 @@ inline search_result search(const board b){
     while (tim() - strt < tl){
         //strt = tim();
         //searched_nodes = 0;
-        //alpha = -1.5;
-        //beta = 1.5;
-        alpha = -1000.0;
-        beta = 1000.0;
+        alpha = -1.5;
+        beta = 1.5;
+        //alpha = -1000.0;
+        //beta = 1000.0;
         search_hash_table_init(1 - f_search_table_idx);
         for (i = 0; i < canput; ++i){
             nb[i].v = get_search(nb[i].b, calc_hash(nb[i].b) & search_hash_mask, f_search_table_idx).second;
@@ -1136,13 +1111,19 @@ inline search_result search(const board b){
                     }
                 }
             }
+            if (!break_flag){
+                f_search_table_idx = 1 - f_search_table_idx;
+                policy = tmp_policy;
+                value = alpha;
+                res_depth = depth + 1;
+                cerr << "depth: " << res_depth << " time: " << tim() - strt << " policy: " << policy << " value: " << value<< " nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / max(1LL, tim() - strt) << endl;
+                if (fabs(value) == 1.0)
+                    break;
+                ++depth;
+            }
         } else{
             for (i = 0; i < canput; ++i){
-                g = -nega_alpha_ordering(&nb[i], strt, 0, depth, -beta, -alpha);
-                if (g == inf){
-                    break_flag = true;
-                    break;
-                }
+                g = -nega_alpha_ordering_final(&nb[i], strt, 0, depth, -beta, -alpha);
                 if (alpha < g){
                     alpha = g;
                     tmp_policy = nb[i].policy;
@@ -1150,16 +1131,12 @@ inline search_result search(const board b){
                 if (alpha == 1.0)
                     break;
             }
-        }
-        if (!break_flag){
             f_search_table_idx = 1 - f_search_table_idx;
             policy = tmp_policy;
             value = alpha;
             res_depth = depth + 1;
             cerr << "depth: " << res_depth << " time: " << tim() - strt << " policy: " << policy << " value: " << value<< " nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / max(1LL, tim() - strt) << endl;
-            if (fabs(value) == 1.0)
-                break;
-            ++depth;
+            break;
         }
     }
     cerr << "policy: " << policy << " value: " << value << endl;
