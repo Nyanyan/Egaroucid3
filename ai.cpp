@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 2000
+#define tl 500
 
 #define hw 8
 #define hw_m1 7
@@ -1240,7 +1240,8 @@ int main(){
             if (policy != -1){
                 b = move(&b, policy);
                 ++n_stones;
-                cout << coord_str(policy, direction) << " " << 50 << endl;
+                result = search(b);
+                cout << coord_str(policy, direction) << " " << 50.0 + result.value * 50.0 << endl;
                 continue;
             }
         }
