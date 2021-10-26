@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 150
+#define tl 150000
 
 #define hw 8
 #define hw_m1 7
@@ -739,8 +739,8 @@ double final_move(const board *b){
             }
             if (score > before_score)
                 ++score;
-            if (score > 0)
-                return 1.0;
+            //if (score > 0)
+            //    return 1.0;
             max_score = max(max_score, score);
             break;
         }
@@ -753,7 +753,7 @@ double final_move(const board *b){
         rb.n = b->n;
         return -final_move(&rb);
     }
-    //return max_score;
+    return max_score;
     if (max_score == 0)
         return 0.0;
     return -1.0;
@@ -909,7 +909,7 @@ double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth,
 double nega_alpha_move_ordering(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
     if (tim() - strt > tl)
         return -inf;
-    if (depth <= 7)
+    if (depth <= 6)
         return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
     ++searched_nodes;
     if (skip_cnt == 2 || b->n == hw2)
@@ -981,7 +981,7 @@ double nega_alpha_move_ordering(const board *b, const long long strt, int skip_c
 double nega_scout(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
     if (tim() - strt > tl)
         return -inf;
-    if (depth <= 7)
+    if (depth <= 5)
         return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
     ++searched_nodes;
     if (skip_cnt == 2 || b->n == hw2)
@@ -1042,7 +1042,7 @@ double nega_scout(const board *b, const long long strt, int skip_cnt, int depth,
     v = g;
     alpha = max(alpha, g);
     for (int i = 1; i < canput; ++i){
-        g = -nega_alpha_move_ordering(&nb[i], strt, 0, depth - 1, -alpha - window, -alpha);
+        g = -nega_alpha_move_ordering_final(&nb[i], strt, 0, depth - 1, -alpha - window, -alpha);
         if (g == inf)
             return -inf;
         if (beta <= g){
@@ -1087,7 +1087,7 @@ inline search_result search(const board b){
     int canput = nb.size();
     cerr << "canput: " << canput << endl;
     int depth = 3;
-    if (b.n >= hw2 - 16)
+    //if (b.n >= hw2 - 16)
         depth = hw2_m1 - b.n;
     int res_depth;
     int policy = -1;
@@ -1096,8 +1096,12 @@ inline search_result search(const board b){
     searched_nodes = 0;
     bool break_flag = false;
     while (tim() - strt < tl){
-        alpha = -1.5;
-        beta = 1.5;
+        //strt = tim();
+        //searched_nodes = 0;
+        //alpha = -1.5;
+        //beta = 1.5;
+        alpha = -1000.0;
+        beta = 1000.0;
         search_hash_table_init(1 - f_search_table_idx);
         for (i = 0; i < canput; ++i){
             nb[i].v = get_search(nb[i].b, calc_hash(nb[i].b) & search_hash_mask, f_search_table_idx).second;
