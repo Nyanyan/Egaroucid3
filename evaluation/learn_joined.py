@@ -1,7 +1,7 @@
 from copy import deepcopy
 import tensorflow as tf
 from tensorflow.keras.datasets import boston_housing
-from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, concatenate, Flatten, Dropout, Lambda
+from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, concatenate, Flatten, Dropout, LeakyReLU
 from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler, LambdaCallback, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
@@ -20,11 +20,9 @@ inf = 10000000.0
 
 min_n_stones = 4 + 50
 max_n_stones = 4 + 60
-game_num = 30000 #117000
+game_num = 20000 #117000
 test_ratio = 0.1
 n_epochs = 200
-one_board_num = 3
-
 
 line2_idx = [[8, 9, 10, 11, 12, 13, 14, 15], [1, 9, 17, 25, 33, 41, 49, 57], [6, 14, 22, 30, 38, 46, 54, 62], [48, 49, 50, 51, 52, 53, 54, 55]] # line2
 for pattern in deepcopy(line2_idx):
@@ -50,7 +48,7 @@ diagonal7_idx = [[1, 10, 19, 28, 37, 46, 55], [48, 41, 34, 27, 20, 13, 6], [62, 
 for pattern in deepcopy(diagonal7_idx):
     diagonal7_idx.append(list(reversed(pattern)))
 
-diagonal8_idx = [[0, 9, 18, 27, 36, 45, 54, 63], [0, 9, 18, 27, 36, 45, 54, 63], [7, 14, 21, 28, 35, 42, 49, 56], [7, 14, 21, 28, 35, 42, 49, 56]]
+diagonal8_idx = [[0, 9, 18, 27, 36, 45, 54, 63], [7, 14, 21, 28, 35, 42, 49, 56]]
 for pattern in deepcopy(diagonal8_idx):
     diagonal8_idx.append(list(reversed(pattern)))
 
@@ -74,25 +72,14 @@ corner25_idx = [
 
 
 pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, corner25_idx]
-#pattern_idx = [edge_2x_idx, triangle_idx]
-all_data = [[] for _ in range(len(pattern_idx))]
+len_patterns = sum(len(i) for i in pattern_idx)
+all_data = [[] for _ in range(len_patterns)]
 all_labels = []
-
-def calc_idx(board, patterns):
-    res = []
-    for pattern in patterns:
-        tmp = 0
-        for elem in pattern:
-            tmp *= 3
-            tmp += 0 if board[elem] == '0' else 1 if board[elem] == '1' else 2
-        res.append(tmp)
-    return res
 
 def make_lines(board, patterns):
     res = []
-    for _ in range(one_board_num):
-        pattern = patterns[randrange(0, 8)]
-        #for pattern in patterns:
+    for pattern in patterns:
+        #pattern = patterns[randrange(0, 8)]
         tmp = []
         for elem in pattern:
             tmp.append(1.0 if board[elem] == '0' else 0.0)
@@ -133,34 +120,40 @@ def collect_data(num):
             for _ in range(8):
                 all_labels.append(score)
             '''
+            idx = 0
             for i in range(len(pattern_idx)):
                 lines = make_lines(board, pattern_idx[i])
                 for line in lines:
-                    all_data[i].append(line)
-            for _ in range(one_board_num):
-                all_labels.append(score)
+                    all_data[idx].append(line)
+                    idx += 1
+            all_labels.append(score)
             
-
+'''
 def LeakyReLU(x):
     return tf.math.maximum(0.01 * x, x)
-
+'''
 y_all = None
-x = [None for _ in range(len(pattern_idx))]
-ys = []
+x = []
+y = []
 names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle', 'corner25']
 #names = ['edge2x', 'triangle']
 for i in range(len(pattern_idx)):
-    x[i] = Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in')
-    y = Dense(16)(x[i])
-    y = Lambda(lambda xx: LeakyReLU(xx))(y)
-    y = Dense(16)(y)
-    y = Lambda(lambda xx: LeakyReLU(xx))(y)
-    y = Dense(1, name=names[i] + '_out')(y)
-    ys.append(y)
-y_all = Add()(ys)
+    layers = []
+    layers.append(Dense(16))
+    layers.append(LeakyReLU(alpha=0.01))
+    layers.append(Dense(16))
+    layers.append(LeakyReLU(alpha=0.01))
+    layers.append(Dense(1, name=names[i] + '_out'))
+    for j in range(len(pattern_idx[i])):
+        x.append(Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in' + str(j)))
+        tmp = x[-1]
+        for layer in layers:
+            tmp = layer(tmp)
+        y.append(tmp)
+y_all = Add()(y)
 model = Model(inputs=x, outputs=y_all)
 model.summary()
-plot_model(model, to_file='model.png', show_shapes=True)
+plot_model(model, to_file='model.png')
 
 for i in trange((game_num + 999) // 1000):
     collect_data(i)
