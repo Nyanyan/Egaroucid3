@@ -1,7 +1,7 @@
-#40 depth: 20 time: 1171 policy: 2 value: 1 nodes: 5175220 nps: 4415716
-#41 
-#42 
-#43 
-#44 
+#40 depth: 20 time: 868 policy: 2 value: 1 nodes: 11115571 nps: 12791220
+#41 depth: 22 time: 65199 policy: 6 value: -1 nodes: 867098439 nps: 13299055
+#42 depth: 22 time: 11243 policy: 14 value: 1 nodes: 146903841 nps: 13066249
+#43 depth: 23 time: 51209 policy: 4 value: -1 nodes: 597076808 nps: 11659379
+#44 depth: 23 time: 65325 policy: 11 value: -1 nodes: 710273703 nps: 10872923
 #45 
 #46 
