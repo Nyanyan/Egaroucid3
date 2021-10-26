@@ -18,8 +18,8 @@ import os
 
 inf = 10000000.0
 
-min_n_stones = 4 + 50
-max_n_stones = 4 + 60
+min_n_stones = 4 + 30
+max_n_stones = 4 + 40
 game_num = 20000 #117000
 test_ratio = 0.1
 n_epochs = 200

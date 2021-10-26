@@ -1,7 +1,7 @@
 from copy import deepcopy
 import tensorflow as tf
 from tensorflow.keras.datasets import boston_housing
-from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, concatenate, Flatten, Dropout, Lambda
+from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, concatenate, Flatten, Dropout, Lambda, LeakyReLU
 from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler, LambdaCallback, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
@@ -16,10 +16,10 @@ import subprocess
 import datetime
 import os
 import sys
-
+'''
 def LeakyReLU(x):
     return tf.math.maximum(0.01 * x, x)
-
+'''
 def get_layer_index(model, layer_name, not_found=None):
     for i, l in enumerate(model.layers):
         if l.name == layer_name:

@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 150
+#define tl 2000
 
 #define hw 8
 #define hw_m1 7
@@ -1051,7 +1051,7 @@ inline search_result search(const board b){
     int canput = nb.size();
     cerr << "canput: " << canput << endl;
     int depth = 3;
-    if (b.n >= hw2 - 19)
+    if (b.n >= hw2 - 20)
         depth = hw2_m1 - b.n;
     int res_depth;
     int policy = -1;
