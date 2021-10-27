@@ -18,12 +18,12 @@ import os
 
 inf = 10000000.0
 
-min_n_stones = 4 + 50
-max_n_stones = 4 + 60
-game_num = 30000 #117000
+min_n_stones = 4 + 10
+max_n_stones = 4 + 20
+game_num = 10000 #117000
 test_ratio = 0.1
 n_epochs = 200
-one_board_num = 3
+one_board_num = 2
 
 
 line2_idx = [[8, 9, 10, 11, 12, 13, 14, 15], [1, 9, 17, 25, 33, 41, 49, 57], [6, 14, 22, 30, 38, 46, 54, 62], [48, 49, 50, 51, 52, 53, 54, 55]] # line2
@@ -125,7 +125,8 @@ def collect_data(num):
     for datum in data:
         board, score = datum.split()
         if min_n_stones <= calc_n_stones(board) < max_n_stones:
-            score = float(score)
+            #score = float(score)
+            score = float(score) / 64
             '''
             for i in range(len(pattern_idx)):
                 lines = make_lines(board, pattern_idx[i])
@@ -180,7 +181,7 @@ test_labels = all_labels[n_train_data:len_data]
 model.compile(loss='mse', metrics='mae', optimizer='adam')
 print(model.evaluate(test_data, test_labels))
 early_stop = EarlyStopping(monitor='val_loss', patience=5)
-model_checkpoint = ModelCheckpoint(filepath=os.path.join('learned_data/models', 'model_{epoch:02d}_{val_loss:.2f}.h5'), monitor='val_loss', verbose=1)
+model_checkpoint = ModelCheckpoint(filepath=os.path.join('learned_data/models', 'model_{epoch:02d}_{val_loss:.5f}.h5'), monitor='val_loss', verbose=1)
 history = model.fit(train_data, train_labels, epochs=n_epochs, validation_data=(test_data, test_labels), callbacks=[early_stop, model_checkpoint])
 
 now = datetime.datetime.today()

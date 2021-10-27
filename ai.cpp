@@ -454,7 +454,7 @@ inline void pre_evaluation(int phase_idx, int evaluate_idx, int pattern_size, do
     double arr[20];
     for (idx = 0; idx < pow3[pattern_size]; ++idx){
         for (i = 0; i < pattern_size; ++i){
-            digit = (idx / pow3[i]) % 3;
+            digit = (idx / pow3[pattern_size - 1 - i]) % 3;
             if (digit == 0){
                 arr[i] = 1.0;
                 arr[pattern_size + i] = 0.0;
@@ -595,8 +595,8 @@ inline int calc_phase_idx(const board *b){
 }
 
 inline double evaluate(const board *b){
-    int idx;
-    int phase_idx = calc_phase_idx(b);
+    int idx, phase_idx;
+    phase_idx = calc_phase_idx(b);
     double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, corner25 = 0.0;
 
     line2 += evaluate_arr[phase_idx][0][b->b[1]];
@@ -711,9 +711,11 @@ inline double evaluate(const board *b){
 
     //cerr << line2 / 4.0 << " " << line3 / 4.0 << " " << line4 / 4.0 << " " << diagonal5 / 4.0 << " " << diagonal6 / 4.0 << " " << diagonal7 / 4.0 << " " << diagonal8 / 2.0 << " " << edge_2x / 4.0 << " " << triangle / 4.0 << " " << corner25 / 8.0 << endl;
     res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + corner25 / 8.0;
+    //res = line2 + line3 + line4 + diagonal5 + diagonal6 + diagonal7 + diagonal8 + edge_2x + triangle + corner25;
     if (b->p == 1)
         res = -res;
-    return min(0.9999, max(-0.9999, res));
+    //res += canput_evaluate(b) * canput_weight[turn];
+    return min(1.0, max(-1.0, res));
 }
 
 double canput_exact_evaluate(board *b){
@@ -1111,9 +1113,9 @@ inline search_result search(const board b){
                 value = alpha;
                 res_depth = depth + 1;
                 cerr << "depth: " << res_depth << " time: " << tim() - strt << " policy: " << policy << " value: " << value<< " nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / max(1LL, tim() - strt) << endl;
-                if (fabs(value) == 1.0)
-                    break;
                 ++depth;
+                if (depth == hw2_m1 - b.n)
+                    break;
             }
         } else{
             for (i = 0; i < canput; ++i){
@@ -1122,12 +1124,12 @@ inline search_result search(const board b){
                     alpha = g;
                     tmp_policy = nb[i].policy;
                 }
-                if (alpha == 1.0)
+                if (alpha >= 1.0)
                     break;
             }
             f_search_table_idx = 1 - f_search_table_idx;
             policy = tmp_policy;
-            value = alpha;
+            value = max(-1.0, min(1.0, alpha));
             res_depth = depth + 1;
             cerr << "depth: " << res_depth << " time: " << tim() - strt << " policy: " << policy << " value: " << value<< " nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / max(1LL, tim() - strt) << endl;
             break;
@@ -1250,13 +1252,13 @@ int main(){
                 b = move(&b, policy);
                 ++n_stones;
                 result = search(b);
-                cout << coord_str(policy, direction) << " " << 50.0 + result.value * 50.0 << endl;
+                cout << coord_str(policy, direction) << " " << result.value * 64.0 << endl;
                 continue;
             }
         }
         result = search(b);
         cerr << "policy " << result.policy << endl;
-        cout << coord_str(result.policy, direction) << " " << 50.0 + result.value * 50.0 << endl;
+        cout << coord_str(result.policy, direction) << " " << result.value * 64.0 << endl;
     }
     return 0;
 }

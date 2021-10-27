@@ -14,5 +14,6 @@ book/third_party
 evaluation/learned_data
 evaluation/third_party
 evaluation/data
+evaluation/data_stones
 ffotest/ffotest
 ffotest/ai.out
