@@ -52,3 +52,5 @@ for i in range(20):
     with open('data_additional/' + digit(i, 7) + '.txt', 'w') as f:
         for datum in data:
             f.write(' '.join(datum) + '\n')
+
+evaluate.kill()

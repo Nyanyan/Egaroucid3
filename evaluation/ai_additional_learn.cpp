@@ -625,8 +625,8 @@ inline pair<int, int> surround(const board *b){
     res.first = 0;
     res.second = 0;
     for (int i = 0; i < b_idx_num; ++i){
-        res.first += canput_arr[0][b->b[i]];
-        res.second += canput_arr[1][b->b[i]];
+        res.first += surround_arr[0][b->b[i]];
+        res.second += surround_arr[1][b->b[i]];
     }
     return res;
 }

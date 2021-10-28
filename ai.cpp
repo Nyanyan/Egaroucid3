@@ -45,9 +45,9 @@ using namespace std;
 #define n_dense0 16
 #define n_dense1 16
 
-#define mpca 1.2566627972048607
-#define mpcsd 0.2380536202615582
-#define mpct 0.95
+#define mpca 1.113598630521083
+#define mpcsd 0.27059419121478845
+#define mpct 1.6
 #define mpcwindow 1e-10
 
 #define n_all_input 4
@@ -637,7 +637,7 @@ inline double end_game(const board *b){
     return 0.0;
 }
 
-inline int canput(const board *b){
+inline int calc_canput(const board *b){
     int res = 0;
     for (int i = 0; i < b_idx_num; ++i)
         res += canput_arr[b->p][b->b[i]];
@@ -646,17 +646,17 @@ inline int canput(const board *b){
     return res;
 }
 
-inline int surround0(const board *b){
+inline int calc_surround0(const board *b){
     int res = 0;
     for (int i = 0; i < b_idx_num; ++i)
-        res += canput_arr[0][b->b[i]];
+        res += surround_arr[0][b->b[i]];
     return res;
 }
 
-inline int surround1(const board *b){
+inline int calc_surround1(const board *b){
     int res = 0;
     for (int i = 0; i < b_idx_num; ++i)
-        res += canput_arr[1][b->b[i]];
+        res += surround_arr[1][b->b[i]];
     return res;
 }
 
@@ -675,7 +675,7 @@ inline int calc_phase_idx(const board *b){
     return 4;
 }
 
-inline double pattern(const board *b){
+inline double calc_pattern(const board *b){
     int idx, phase_idx;
     phase_idx = calc_phase_idx(b);
     double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, corner25 = 0.0;
@@ -803,10 +803,10 @@ inline double pattern(const board *b){
 inline double evaluate(const board *b){
     int phase_idx = calc_phase_idx(b);
     double in_arr[n_all_input];
-    in_arr[0] = pattern(b);
-    in_arr[1] = (double)canput(b) / 30.0;
-    in_arr[2] = (double)surround0(b) / 30.0;
-    in_arr[3] = (double)surround1(b) / 30.0;
+    in_arr[0] = calc_pattern(b);
+    in_arr[1] = (double)calc_canput(b) / 30.0;
+    in_arr[2] = (double)calc_surround0(b) / 30.0;
+    in_arr[3] = (double)calc_surround1(b) / 30.0;
     double hidden[n_all_dense0];
     int i, j;
     for (i = 0; i < n_all_dense0; ++i){
