@@ -1071,7 +1071,7 @@ inline search_result search(const board b){
     int canput = nb.size();
     cerr << "canput: " << canput << endl;
     int depth = 3;
-    if (b.n >= hw2 - 21)
+    if (b.n >= hw2 - 20)
         depth = hw2_m1 - b.n;
     int res_depth;
     int policy = -1;
