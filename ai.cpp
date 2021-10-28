@@ -45,6 +45,11 @@ using namespace std;
 #define n_dense0 16
 #define n_dense1 16
 
+#define mpcb -0.005431565532331731
+#define mpcsd 0.2862477765560831
+#define mpct 0.5
+#define mpcwindow 0.2
+
 struct board{
     int b[b_idx_num];
     int p;
@@ -106,7 +111,7 @@ int reverse_board[n_line];
 vector<int> vacant_lst;
 book_node *book[book_hash_table_size];
 search_node *search_replace_table[2][search_hash_table_size];
-int searched_nodes;
+long long searched_nodes;
 int f_search_table_idx;
 double evaluate_arr[n_phases][n_patterns][max_evaluate_idx];
 
@@ -746,6 +751,23 @@ bool move_ordering(const board p, const board q){
     return p.v > q.v;
 }
 
+double nega_alpha_ordering(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta);
+
+inline bool mpc_lower(const board *b, int skip_cnt, int depth, double alpha){
+    double vd = nega_alpha_ordering(b, tim(), skip_cnt, depth / 2, alpha - mpcb - mpct * mpcsd - mpcwindow, alpha - mpcb - mpct * mpcsd);
+    //cerr << vd << " " << vd + mpcb + mpct * mpcsd << " " << alpha << " " << (vd + mpcb + mpct * mpcsd < alpha) << endl;
+    if (vd < alpha - mpcb - mpct * mpcsd)
+        return true;
+    return false;
+}
+
+inline bool mpc_higher(const board *b, int skip_cnt, int depth, double beta){
+    double vd = nega_alpha_ordering(b, tim(), skip_cnt, depth / 2, beta - mpcb + mpct * mpcsd, beta - mpcb + mpct * mpcsd + mpcwindow);
+    if (vd > beta - mpcb + mpct * mpcsd)
+        return true;
+    return false;
+}
+
 double final_move(const board *b, bool skipped){
     ++searched_nodes;
     int before_score = 0;
@@ -818,6 +840,10 @@ double nega_alpha_ordering_final(const board *b, const long long strt, int skip_
         return end_game(b);
     if (depth <= 7)
         return nega_alpha_final(b, strt, skip_cnt, depth, alpha, beta);
+    if (mpc_higher(b, skip_cnt, depth, beta))
+        return beta + window;
+    if (mpc_lower(b, skip_cnt, depth, alpha))
+        return alpha - window;
     ++searched_nodes;
     vector<board> nb;
     int canput = 0;
@@ -902,6 +928,10 @@ double nega_alpha_ordering(const board *b, const long long strt, int skip_cnt, i
         return evaluate(b);
     if (depth <= 3)
         return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
+    if (mpc_higher(b, skip_cnt, depth, beta))
+        return beta + window;
+    if (mpc_lower(b, skip_cnt, depth, alpha))
+        return alpha - window;
     int hash = (int)(calc_hash(b->b) & search_hash_mask);
     pair<double, double> lu = get_search(b->b, hash, 1 - f_search_table_idx);
     if (lu.first != -inf){
@@ -974,6 +1004,10 @@ double nega_scout(const board *b, const long long strt, int skip_cnt, int depth,
         return evaluate(b);
     if (depth <= 3)
         return nega_alpha(b, strt, skip_cnt, depth, alpha, beta);
+    if (mpc_higher(b, skip_cnt, depth, beta))
+        return beta + window;
+    if (mpc_lower(b, skip_cnt, depth, alpha))
+        return alpha - window;
     int hash = (int)(calc_hash(b->b) & search_hash_mask);
     pair<double, double> lu = get_search(b->b, hash, 1 - f_search_table_idx);
     if (lu.first != -inf){
@@ -1093,19 +1127,6 @@ inline search_result search(const board b){
             }
             if (canput)
                 sort(nb.begin(), nb.end(), move_ordering);
-            /*
-            for (i = 0; i < canput; ++i){
-                g = -nega_alpha_ordering(&nb[i], strt, 0, depth, -beta, -alpha);
-                if (g == inf){
-                    break_flag = true;
-                    break;
-                }
-                if (alpha < g){
-                    alpha = g;
-                    tmp_policy = nb[i].policy;
-                }
-            }
-            */
             g = -nega_scout(&nb[0], strt, 0, depth, -beta, -alpha);
             if (g == inf)
                 break;
