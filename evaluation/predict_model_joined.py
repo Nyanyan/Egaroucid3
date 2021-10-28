@@ -44,7 +44,7 @@ diagonal7_idx = [[1, 10, 19, 28, 37, 46, 55], [48, 41, 34, 27, 20, 13, 6], [62, 
 for pattern in deepcopy(diagonal7_idx):
     diagonal7_idx.append(list(reversed(pattern)))
 
-diagonal8_idx = [[0, 9, 18, 27, 36, 45, 54, 63], [0, 9, 18, 27, 36, 45, 54, 63], [7, 14, 21, 28, 35, 42, 49, 56], [7, 14, 21, 28, 35, 42, 49, 56]]
+diagonal8_idx = [[0, 9, 18, 27, 36, 45, 54, 63], [7, 14, 21, 28, 35, 42, 49, 56]]
 for pattern in deepcopy(diagonal8_idx):
     diagonal8_idx.append(list(reversed(pattern)))
 
@@ -79,33 +79,26 @@ def make_lines(board, patterns):
         for elem in pattern:
             tmp.append(1.0 if board[elem] == '1' else 0.0)
         res.append(tmp)
-    return res
+    return res 
 
 
-model = load_model('learned_data/10_20.h5')
-hidden = Model(inputs=model.input, outputs=model.get_layer('line2_out').output)
+model = load_model('learned_data/30_40.h5')
+hidden = Model(inputs=model.input, outputs=model.get_layer('line2_add').output)
 
 board = '...0000.0.0001..001011..000101..001001...100011.1.1111......11..'
+count = 60
+for i in board:
+    count -= i == '.'
+print(count)
 
-in_arr = [make_lines(board, pattern_idx[i]) for i in range(len(pattern_idx))]
-in_arr = [np.array(i) for i in in_arr]
-'''
-in_arr = [
-    [1,1,1,0,1,0,1,0,0,0,0,1,0,0,0,1],
-    [1,1,1,0,1,0,1,0,0,0,0,1,0,0,0,1],
-    [1,1,1,0,1,0,1,0,0,0,0,1,0,0,0,1],
-    [0,1,0,1,0,1,0,0,0,1],
-    [1,0,1,0,1,0,0,1,0,0,0,1],
-    [1,1,0,1,0,1,0,0,0,1,0,0,0,1],
-    [1,1,1,0,1,0,1,0,0,0,0,1,0,0,0,1],
-    [1,1,1,1,1,0,1,0,1,0,0,0,0,0,0,1,0,0,0,1],
-    [1,1,1,1,1,0,1,0,1,0,0,0,0,0,0,1,0,0,0,1],
-    [1,1,1,1,1,0,1,0,1,0,0,0,0,0,0,1,0,0,0,1]
-]
+#in_arr = [make_lines(board, pattern_idx[i]) for i in range(len(pattern_idx))]
+#in_arr = [np.array(i) for i in in_arr]
+
+in_arr = []
+for i in range(len(pattern_idx)):
+    in_arr.extend(make_lines(board, pattern_idx[i]))
 in_arr = [np.array([i]) for i in in_arr]
-'''
+
 prediction = model.predict(in_arr)
 print(prediction)
-print(sum(i[0] for i in prediction) / 8.0)
 print(hidden.predict(in_arr))
-print(sum(i[0] for i in hidden.predict(in_arr)) / 8.0)

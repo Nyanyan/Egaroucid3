@@ -117,7 +117,7 @@ def calc_n_stones(board):
 def collect_data(num):
     global all_data, all_labels
     try:
-        with open('data/' + digit(num, 7) + '.txt', 'r') as f:
+        with open('data_stones/' + digit(num, 7) + '.txt', 'r') as f:
             data = list(f.read().splitlines())
     except:
         print('cannot open')
@@ -126,7 +126,8 @@ def collect_data(num):
         board, score = datum.split()
         if min_n_stones <= calc_n_stones(board) < max_n_stones:
             #score = float(score)
-            score = float(score) / 64
+            score = float(score)
+            score = 1.0 if score > 0.0 else -1.0 if score < 0.0 else 0.0
             '''
             for i in range(len(pattern_idx)):
                 lines = make_lines(board, pattern_idx[i])

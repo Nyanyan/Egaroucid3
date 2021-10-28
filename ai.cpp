@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 500
+#define tl 150
 
 #define hw 8
 #define hw_m1 7
@@ -29,7 +29,7 @@ using namespace std;
 #define n_line 6561
 #define max_evaluate_idx 59049
 #define inf 1000000000.0
-#define window 1e-2
+#define window 1e-10
 #define b_idx_num 38
 
 #define book_hash_table_size 16384
@@ -81,6 +81,7 @@ const int global_place[b_idx_num][hw] = {
 };
 vector<vector<int>> place_included;
 int pow3[11], pow17[hw];
+int mod3[n_line][hw];
 int move_arr[2][n_line][hw][2];
 bool legal_arr[2][n_line][hw];
 int flip_arr[2][n_line][hw];
@@ -312,6 +313,14 @@ inline void init_pop_digit(){
     }
 }
 
+inline void init_mod3(){
+    int i, j;
+    for (i = 0; i < n_line; ++i){
+        for (j = 0; j < hw; ++j)
+            mod3[i][j] = i % pow3[j];
+    }
+}
+
 inline board move(const board *b, const int global_place){
     board res;
     int j, place, g_place;
@@ -429,7 +438,7 @@ inline double leaky_relu(double x){
 }
 
 inline double predict(int pattern_size, double in_arr[], double dense0[n_dense0][20], double bias0[n_dense0], double dense1[n_dense1][n_dense0], double bias1[n_dense1], double dense2[n_dense1], double bias2){
-    double hidden0[16], hidden1[16];
+    double hidden0[32], hidden1[32];
     int i, j;
     for (i = 0; i < n_dense0; ++i){
         hidden0[i] = bias0[i];
@@ -626,32 +635,32 @@ inline double evaluate(const board *b){
     line4 += evaluate_arr[phase_idx][2][reverse_board[b->b[11]]];
     line4 += evaluate_arr[phase_idx][2][reverse_board[b->b[12]]];
 
-    diagonal5 += evaluate_arr[phase_idx][3][b->b[18]];
-    diagonal5 += evaluate_arr[phase_idx][3][b->b[24]];
-    diagonal5 += evaluate_arr[phase_idx][3][b->b[29]];
-    diagonal5 += evaluate_arr[phase_idx][3][b->b[35]];
-    diagonal5 += evaluate_arr[phase_idx][3][reverse_board[b->b[18]] * pow3[3]];
-    diagonal5 += evaluate_arr[phase_idx][3][reverse_board[b->b[24]] * pow3[3]];
-    diagonal5 += evaluate_arr[phase_idx][3][reverse_board[b->b[29]] * pow3[3]];
-    diagonal5 += evaluate_arr[phase_idx][3][reverse_board[b->b[35]] * pow3[3]];
+    diagonal5 += evaluate_arr[phase_idx][3][b->b[18] / pow3[3]];
+    diagonal5 += evaluate_arr[phase_idx][3][b->b[24] / pow3[3]];
+    diagonal5 += evaluate_arr[phase_idx][3][b->b[29] / pow3[3]];
+    diagonal5 += evaluate_arr[phase_idx][3][b->b[35] / pow3[3]];
+    diagonal5 += evaluate_arr[phase_idx][3][mod3[reverse_board[b->b[18]]][5]];
+    diagonal5 += evaluate_arr[phase_idx][3][mod3[reverse_board[b->b[24]]][5]];
+    diagonal5 += evaluate_arr[phase_idx][3][mod3[reverse_board[b->b[29]]][5]];
+    diagonal5 += evaluate_arr[phase_idx][3][mod3[reverse_board[b->b[35]]][5]];
 
-    diagonal6 += evaluate_arr[phase_idx][4][b->b[19]];
-    diagonal6 += evaluate_arr[phase_idx][4][b->b[23]];
-    diagonal6 += evaluate_arr[phase_idx][4][b->b[30]];
-    diagonal6 += evaluate_arr[phase_idx][4][b->b[34]];
-    diagonal6 += evaluate_arr[phase_idx][4][reverse_board[b->b[19]] * pow3[2]];
-    diagonal6 += evaluate_arr[phase_idx][4][reverse_board[b->b[23]] * pow3[2]];
-    diagonal6 += evaluate_arr[phase_idx][4][reverse_board[b->b[30]] * pow3[2]];
-    diagonal6 += evaluate_arr[phase_idx][4][reverse_board[b->b[34]] * pow3[2]];
+    diagonal6 += evaluate_arr[phase_idx][4][b->b[19] / pow3[2]];
+    diagonal6 += evaluate_arr[phase_idx][4][b->b[23] / pow3[2]];
+    diagonal6 += evaluate_arr[phase_idx][4][b->b[30] / pow3[2]];
+    diagonal6 += evaluate_arr[phase_idx][4][b->b[34] / pow3[2]];
+    diagonal6 += evaluate_arr[phase_idx][4][mod3[reverse_board[b->b[19]]][6]];
+    diagonal6 += evaluate_arr[phase_idx][4][mod3[reverse_board[b->b[23]]][6]];
+    diagonal6 += evaluate_arr[phase_idx][4][mod3[reverse_board[b->b[30]]][6]];
+    diagonal6 += evaluate_arr[phase_idx][4][mod3[reverse_board[b->b[34]]][6]];
 
-    diagonal7 += evaluate_arr[phase_idx][5][b->b[20]];
-    diagonal7 += evaluate_arr[phase_idx][5][b->b[22]];
-    diagonal7 += evaluate_arr[phase_idx][5][b->b[31]];
-    diagonal7 += evaluate_arr[phase_idx][5][b->b[33]];
-    diagonal7 += evaluate_arr[phase_idx][5][reverse_board[b->b[20]] * pow3[1]];
-    diagonal7 += evaluate_arr[phase_idx][5][reverse_board[b->b[22]] * pow3[1]];
-    diagonal7 += evaluate_arr[phase_idx][5][reverse_board[b->b[31]] * pow3[1]];
-    diagonal7 += evaluate_arr[phase_idx][5][reverse_board[b->b[33]] * pow3[1]];
+    diagonal7 += evaluate_arr[phase_idx][5][b->b[20] / pow3[1]];
+    diagonal7 += evaluate_arr[phase_idx][5][b->b[22] / pow3[1]];
+    diagonal7 += evaluate_arr[phase_idx][5][b->b[31] / pow3[1]];
+    diagonal7 += evaluate_arr[phase_idx][5][b->b[33] / pow3[1]];
+    diagonal7 += evaluate_arr[phase_idx][5][mod3[reverse_board[b->b[20]]][7]];
+    diagonal7 += evaluate_arr[phase_idx][5][mod3[reverse_board[b->b[22]]][7]];
+    diagonal7 += evaluate_arr[phase_idx][5][mod3[reverse_board[b->b[31]]][7]];
+    diagonal7 += evaluate_arr[phase_idx][5][mod3[reverse_board[b->b[33]]][7]];
 
     diagonal8 += evaluate_arr[phase_idx][6][b->b[21]];
     diagonal8 += evaluate_arr[phase_idx][6][b->b[32]];
@@ -715,7 +724,7 @@ inline double evaluate(const board *b){
     if (b->p == 1)
         res = -res;
     //res += canput_evaluate(b) * canput_weight[turn];
-    return min(1.0, max(-1.0, res));
+    return min(0.9999, max(-0.9999, res));
 }
 
 double canput_exact_evaluate(board *b){
@@ -1062,7 +1071,7 @@ inline search_result search(const board b){
     int canput = nb.size();
     cerr << "canput: " << canput << endl;
     int depth = 3;
-    if (b.n >= hw2 - 20)
+    if (b.n >= hw2 - 21)
         depth = hw2_m1 - b.n;
     int res_depth;
     int policy = -1;
@@ -1074,16 +1083,29 @@ inline search_result search(const board b){
         alpha = -1.5;
         beta = 1.5;
         search_hash_table_init(1 - f_search_table_idx);
-        for (i = 0; i < canput; ++i){
-            nb[i].v = get_search(nb[i].b, calc_hash(nb[i].b) & search_hash_mask, f_search_table_idx).second;
-            if (nb[i].v == -inf)
-                nb[i].v = -evaluate(&nb[i]) - 1000.0;
-            else if (b.p == 1)
-                nb[i].v = -nb[i].v;
-        }
-        if (canput > 2)
-            sort(nb.begin(), nb.end(), move_ordering);
         if (b.n + depth + 1 < hw2){
+            for (i = 0; i < canput; ++i){
+                nb[i].v = get_search(nb[i].b, calc_hash(nb[i].b) & search_hash_mask, f_search_table_idx).second;
+                if (nb[i].v == -inf)
+                    nb[i].v = -evaluate(&nb[i]) - 1000.0;
+                else if (b.p == 1)
+                    nb[i].v = -nb[i].v;
+            }
+            if (canput)
+                sort(nb.begin(), nb.end(), move_ordering);
+            /*
+            for (i = 0; i < canput; ++i){
+                g = -nega_alpha_ordering(&nb[i], strt, 0, depth, -beta, -alpha);
+                if (g == inf){
+                    break_flag = true;
+                    break;
+                }
+                if (alpha < g){
+                    alpha = g;
+                    tmp_policy = nb[i].policy;
+                }
+            }
+            */
             g = -nega_scout(&nb[0], strt, 0, depth, -beta, -alpha);
             if (g == inf)
                 break;
@@ -1118,6 +1140,10 @@ inline search_result search(const board b){
                     break;
             }
         } else{
+            for (i = 0; i < canput; ++i)
+                nb[i].v = -canput_exact_evaluate(&nb[i]);
+            if (canput)
+                sort(nb.begin(), nb.end(), move_ordering);
             for (i = 0; i < canput; ++i){
                 g = -nega_alpha_ordering_final(&nb[i], strt, 0, depth, -beta, -alpha);
                 if (alpha < g){
@@ -1190,6 +1216,15 @@ inline int input_board(int (&board)[b_idx_num], int direction){
     return n_stones;
 }
 
+double calc_result_value(double v){
+    return 50.0 + v * 50.0;
+    /*
+    if (v == 0.0)
+        return 0.0;
+    return 64.0 * v * v / fabs(v) * v;
+    */
+}
+
 int main(){
     int direction, ai_player, policy, n_stones;
     board b;
@@ -1198,6 +1233,7 @@ int main(){
     search_result result;
     cerr << "initializing" << endl;
     init_pow();
+    init_mod3();
     init_move();
     init_local_place();
     init_included();
@@ -1217,7 +1253,7 @@ int main(){
         policy = 37;
         cerr << "FIRST direction " << direction << endl; 
         cerr << "book policy " << policy << endl;
-        cout << coord_str(policy, direction) << " " << 50 << endl;
+        cout << coord_str(policy, direction) << " " << calc_result_value(0.0) << endl;
     } else {
         string board_turns[4] = {
             "...........................10......000..........................",
@@ -1239,10 +1275,13 @@ int main(){
         policy = get_book(first_board);
         cerr << "FIRST direction " << direction << endl;
         cerr << "book policy " << policy << endl;
-        cout << coord_str(policy, direction) << " " << 50 << endl;
+        cout << coord_str(policy, direction) << " " << calc_result_value(0.0) << endl;
     }
     while (true){
         n_stones = input_board(b.b, direction);
+        cerr << evaluate(&b) << endl;
+        //exit(0);
+        cerr << n_stones - 4 << "moves" << endl;
         b.n = n_stones;
         b.p = ai_player;
         if (n_stones < book_stones){
@@ -1252,13 +1291,13 @@ int main(){
                 b = move(&b, policy);
                 ++n_stones;
                 result = search(b);
-                cout << coord_str(policy, direction) << " " << result.value * 64.0 << endl;
+                cout << coord_str(policy, direction) << " " << calc_result_value(result.value) << endl;
                 continue;
             }
         }
         result = search(b);
         cerr << "policy " << result.policy << endl;
-        cout << coord_str(result.policy, direction) << " " << result.value * 64.0 << endl;
+        cout << coord_str(result.policy, direction) << " " << calc_result_value(result.value) << endl;
     }
     return 0;
 }

@@ -15,6 +15,7 @@ from random import randrange
 import subprocess
 import datetime
 import os
+from math import sqrt
 
 inf = 10000000.0
 
@@ -104,7 +105,7 @@ def calc_n_stones(board):
 def collect_data(num):
     global all_data, all_labels
     try:
-        with open('data/' + digit(num, 7) + '.txt', 'r') as f:
+        with open('data_stones/' + digit(num, 7) + '.txt', 'r') as f:
             data = list(f.read().splitlines())
     except:
         print('cannot open')
@@ -113,13 +114,9 @@ def collect_data(num):
         board, score = datum.split()
         if min_n_stones <= calc_n_stones(board) < max_n_stones:
             score = float(score)
-            '''
-            for i in range(len(pattern_idx)):
-                lines = make_lines(board, pattern_idx[i])
-                all_data[i].extend(lines)
-            for _ in range(8):
-                all_labels.append(score)
-            '''
+            score = 1.0 if score > 0.0 else -1.0 if score < 0.0 else 0.0
+            #if score != 0:
+            #    score = sqrt(abs(score)) / 8 * score / abs(score)
             idx = 0
             for i in range(len(pattern_idx)):
                 lines = make_lines(board, pattern_idx[i])
@@ -144,16 +141,18 @@ for i in range(len(pattern_idx)):
     layers.append(Dense(16))
     layers.append(LeakyReLU(alpha=0.01))
     layers.append(Dense(1, name=names[i] + '_out'))
+    before_add = []
     for j in range(len(pattern_idx[i])):
         x.append(Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in' + str(j)))
         tmp = x[-1]
         for layer in layers:
             tmp = layer(tmp)
-        y.append(tmp)
+        before_add.append(tmp)
+    y.append(Add(name=names[i] + '_add')(before_add))
 y_all = Add()(y)
 model = Model(inputs=x, outputs=y_all)
 model.summary()
-plot_model(model, to_file='model.png')
+plot_model(model, to_file='model.png', show_shapes=True)
 
 for i in trange((game_num + 999) // 1000):
     collect_data(i)
