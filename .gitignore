@@ -15,5 +15,8 @@ evaluation/learned_data
 evaluation/third_party
 evaluation/data
 evaluation/data_stones
+evaluation/additional_data
+evaluation/data_player
+evaluation/ai.out
 ffotest/ffotest
 ffotest/ai.out
