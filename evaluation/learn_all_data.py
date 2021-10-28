@@ -22,8 +22,8 @@ def LeakyReLU(x):
 
 inf = 10000000.0
 
-min_n_stones = 4 + 10
-max_n_stones = 4 + 20
+min_n_stones = 4 + 50
+max_n_stones = 4 + 60
 game_num = 20000
 test_ratio = 0.1
 n_epochs = 200
@@ -80,9 +80,9 @@ def collect_data(num):
         board, result, v1, v2, v3, v4 = datum.split()
         if min_n_stones <= calc_n_stones(board) < max_n_stones:
             v1 = float(v1)
-            v2 = float(v2)
-            v3 = float(v3)
-            v4 = float(v4)
+            v2 = float(v2) / 30
+            v3 = float(v3) / 30
+            v4 = float(v4) / 30
             result = float(result)
             all_data.append([v1, v2, v3, v4])
             all_labels.append(result)

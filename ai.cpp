@@ -45,10 +45,13 @@ using namespace std;
 #define n_dense0 16
 #define n_dense1 16
 
-#define mpcb -0.005431565532331731
-#define mpcsd 0.2862477765560831
-#define mpct 0.5
-#define mpcwindow 0.2
+#define mpca 1.2566627972048607
+#define mpcsd 0.2380536202615582
+#define mpct 0.95
+#define mpcwindow 1e-10
+
+#define n_all_input 4
+#define n_all_dense0 16
 
 struct board{
     int b[b_idx_num];
@@ -107,6 +110,8 @@ int count_arr[n_line];
 int count_all_arr[n_line];
 int pop_digit[n_line][hw];
 int reverse_board[n_line];
+int canput_arr[2][n_line];
+int surround_arr[2][n_line];
 
 vector<int> vacant_lst;
 book_node *book[book_hash_table_size];
@@ -114,6 +119,11 @@ search_node *search_replace_table[2][search_hash_table_size];
 long long searched_nodes;
 int f_search_table_idx;
 double evaluate_arr[n_phases][n_patterns][max_evaluate_idx];
+double all_dense0[n_phases][n_all_dense0][n_all_input];
+double all_bias0[n_phases][n_all_dense0];
+double all_dense1[n_phases][n_all_dense0];
+double all_bias1[n_phases];
+
 
 inline long long tim(){
     return chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -215,12 +225,17 @@ inline void init_pow(){
 
 inline void init_move(){
     int idx, b, w, place;
+    bool surround_flag;
     for (idx = 0; idx < n_line; ++idx){
         b = create_one_color(idx, 0);
         w = create_one_color(idx, 1);
         count_arr[idx] = 0;
         count_all_arr[idx] = 0;
         reverse_board[idx] = 0;
+        canput_arr[0][idx] = 0;
+        canput_arr[1][idx] = 0;
+        surround_arr[0][idx] = 0;
+        surround_arr[1][idx] = 0;
         for (place = 0; place < hw; ++place){
             count_arr[idx] += 1 & (b >> place);
             count_arr[idx] -= 1 & (w >> place);
@@ -233,6 +248,19 @@ inline void init_move(){
                 reverse_board[idx] += 1;
             else
                 reverse_board[idx] += 2;
+            surround_flag = false;
+            if (place > 0){
+                if ((1 & (b >> (place - 1))) == 0 && (1 & (w >> (place - 1))) == 0)
+                    surround_flag = true;
+            }
+            if (place < hw_m1){
+                if ((1 & (b >> (place + 1))) == 0 && (1 & (w >> (place + 1))) == 0)
+                    surround_flag = true;
+            }
+            if (1 & (b >> place) && surround_flag)
+                ++surround_arr[0][idx];
+            else if (1 & (w >> place) && surround_flag)
+                ++surround_arr[1][idx];
         }
         for (place = 0; place < hw; ++place){
             move_arr[0][idx][place][0] = move_line_half(b, w, place, 0);
@@ -247,12 +275,10 @@ inline void init_move(){
                 legal_arr[1][idx][place] = true;
             else
                 legal_arr[1][idx][place] = false;
-            /*
-            if (legal_arr[1][idx][place]){
-                print_board_line(idx);
-                cerr << idx << " " << place << " " << move_arr[1][idx][place][0] << " " << move_arr[1][idx][place][1] << endl;
-            }
-            */
+           if (legal_arr[0][idx][place])
+                ++canput_arr[0][idx];
+            if (legal_arr[1][idx][place])
+                ++canput_arr[1][idx];
         }
         for (place = 0; place < hw; ++place){
             flip_arr[0][idx][place] = idx;
@@ -530,6 +556,24 @@ inline void init_evaluation(){
             pre_evaluation(phase_idx, pattern_idx, pattern_sizes[pattern_idx], dense0, bias0, dense1, bias1, dense2, bias2);
         }
     }
+    for (phase_idx = 0; phase_idx < n_phases; ++phase_idx){
+        for (i = 0; i < n_all_input; ++i){
+            for (j = 0; j < n_all_dense0; ++j){
+                getline(ifs, line);
+                all_dense0[phase_idx][j][i] = stof(line);
+            }
+        }
+        for (i = 0; i < n_all_dense0; ++i){
+            getline(ifs, line);
+            all_bias0[phase_idx][i] = stof(line);
+        }
+        for (i = 0; i < n_all_dense0; ++i){
+            getline(ifs, line);
+            all_dense1[phase_idx][i] = stof(line);
+        }
+        getline(ifs, line);
+        all_bias1[phase_idx] = stof(line);
+    }
 }
 
 inline void search_hash_table_init(const int table_idx){
@@ -593,6 +637,29 @@ inline double end_game(const board *b){
     return 0.0;
 }
 
+inline int canput(const board *b){
+    int res = 0;
+    for (int i = 0; i < b_idx_num; ++i)
+        res += canput_arr[b->p][b->b[i]];
+    if (b->p)
+        res = -res;
+    return res;
+}
+
+inline int surround0(const board *b){
+    int res = 0;
+    for (int i = 0; i < b_idx_num; ++i)
+        res += canput_arr[0][b->b[i]];
+    return res;
+}
+
+inline int surround1(const board *b){
+    int res = 0;
+    for (int i = 0; i < b_idx_num; ++i)
+        res += canput_arr[1][b->b[i]];
+    return res;
+}
+
 inline int calc_phase_idx(const board *b){
     int turn = -4;
     for (int idx = 0; idx < hw; ++idx)
@@ -608,7 +675,7 @@ inline int calc_phase_idx(const board *b){
     return 4;
 }
 
-inline double evaluate(const board *b){
+inline double pattern(const board *b){
     int idx, phase_idx;
     phase_idx = calc_phase_idx(b);
     double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, corner25 = 0.0;
@@ -726,9 +793,33 @@ inline double evaluate(const board *b){
     //cerr << line2 / 4.0 << " " << line3 / 4.0 << " " << line4 / 4.0 << " " << diagonal5 / 4.0 << " " << diagonal6 / 4.0 << " " << diagonal7 / 4.0 << " " << diagonal8 / 2.0 << " " << edge_2x / 4.0 << " " << triangle / 4.0 << " " << corner25 / 8.0 << endl;
     res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + corner25 / 8.0;
     //res = line2 + line3 + line4 + diagonal5 + diagonal6 + diagonal7 + diagonal8 + edge_2x + triangle + corner25;
-    if (b->p == 1)
-        res = -res;
+    //if (b->p == 1)
+    //    res = -res;
     //res += canput_evaluate(b) * canput_weight[turn];
+    //return min(0.9999, max(-0.9999, res));
+    return res;
+}
+
+inline double evaluate(const board *b){
+    int phase_idx = calc_phase_idx(b);
+    double in_arr[n_all_input];
+    in_arr[0] = pattern(b);
+    in_arr[1] = (double)canput(b) / 30.0;
+    in_arr[2] = (double)surround0(b) / 30.0;
+    in_arr[3] = (double)surround1(b) / 30.0;
+    double hidden[n_all_dense0];
+    int i, j;
+    for (i = 0; i < n_all_dense0; ++i){
+        hidden[i] = all_bias0[phase_idx][i];
+        for (j = 0; j < n_all_input; ++j)
+            hidden[i] += in_arr[j] * all_dense0[phase_idx][i][j];
+        hidden[i] = leaky_relu(hidden[i]);
+    }
+    double res = all_bias1[phase_idx];
+    for (i = 0; i < n_all_dense0; ++i)
+        res += hidden[i] * all_dense1[phase_idx][i];
+    if (b->p)
+        res = -res;
     return min(0.9999, max(-0.9999, res));
 }
 
@@ -754,16 +845,15 @@ bool move_ordering(const board p, const board q){
 double nega_alpha_ordering(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta);
 
 inline bool mpc_lower(const board *b, int skip_cnt, int depth, double alpha){
-    double vd = nega_alpha_ordering(b, tim(), skip_cnt, depth / 2, alpha - mpcb - mpct * mpcsd - mpcwindow, alpha - mpcb - mpct * mpcsd);
-    //cerr << vd << " " << vd + mpcb + mpct * mpcsd << " " << alpha << " " << (vd + mpcb + mpct * mpcsd < alpha) << endl;
-    if (vd < alpha - mpcb - mpct * mpcsd)
+    double vd = nega_alpha_ordering(b, tim(), skip_cnt, depth / 4, (alpha - mpct * mpcsd) / mpca - mpcwindow, (alpha - mpct * mpcsd) / mpca);
+    if (vd < (alpha - mpct * mpcsd) / mpca)
         return true;
     return false;
 }
 
 inline bool mpc_higher(const board *b, int skip_cnt, int depth, double beta){
-    double vd = nega_alpha_ordering(b, tim(), skip_cnt, depth / 2, beta - mpcb + mpct * mpcsd, beta - mpcb + mpct * mpcsd + mpcwindow);
-    if (vd > beta - mpcb + mpct * mpcsd)
+    double vd = nega_alpha_ordering(b, tim(), skip_cnt, depth / 4, (beta + mpct * mpcsd) / mpca, (beta + mpct * mpcsd) / mpca + mpcwindow);
+    if (vd > (beta + mpct * mpcsd) / mpca)
         return true;
     return false;
 }
@@ -840,10 +930,12 @@ double nega_alpha_ordering_final(const board *b, const long long strt, int skip_
         return end_game(b);
     if (depth <= 7)
         return nega_alpha_final(b, strt, skip_cnt, depth, alpha, beta);
+    /*
     if (mpc_higher(b, skip_cnt, depth, beta))
         return beta + window;
     if (mpc_lower(b, skip_cnt, depth, alpha))
         return alpha - window;
+    */
     ++searched_nodes;
     vector<board> nb;
     int canput = 0;
