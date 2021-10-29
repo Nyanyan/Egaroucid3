@@ -47,7 +47,7 @@ using namespace std;
 
 #define mpca 1.113598630521083
 #define mpcsd 0.27059419121478845
-#define mpct 1.3
+#define mpct 0.85
 #define mpcwindow 1e-10
 
 #define n_all_input 4

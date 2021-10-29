@@ -187,32 +187,51 @@ class reversi:
             #print('Draw!', self.nums[0], '-', self.nums[1])
             return -1
 
-evaluate = subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+
+n_eval = 12
 
 depth = 15
 
-def get_next_move(grid, player, mx_value):
-    global evaluate
-    board = str(player) + '\n' + str(depth) + '\n'
-    for y in range(hw):
-        for x in range(hw):
-            board += '0' if grid[y][x] == 0 else '1' if grid[y][x] == 1 else '.'
-        board += '\n'
-    #print(board)
-    try:
-        evaluate.stdin.write(board.encode('utf-8'))
-        evaluate.stdin.flush()
-        val, pol = evaluate.stdout.readline().decode().strip().split()
-        val = float(val)
-        pol = int(pol)
-        if abs(val) < mx_value:
-            return pol
-        else:
-            return -1
-    except:
-        evaluate = subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        print(board)
-        return -1
+def get_next_move(grids, player, mx_value):
+    global evaluates
+    evaluates = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(n_eval)]
+    res = []
+    for i, grid in zip(trange(len(grids)), grids):
+        board = str(player) + '\n' + str(depth) + '\n'
+        for y in range(hw):
+            for x in range(hw):
+                board += '0' if grid[y][x] == 0 else '1' if grid[y][x] == 1 else '.'
+            board += '\n'
+        evaluates[i % n_eval].stdin.write(board.encode('utf-8'))
+        evaluates[i % n_eval].stdin.flush()
+        if i % n_eval == n_eval - 1:
+            for j in range(n_eval):
+                try:
+                    val, pol = evaluates[j].stdout.readline().decode().strip().split()
+                    val = float(val)
+                    pol = int(pol)
+                    if abs(val) < mx_value:
+                        res.append(pol)
+                    else:
+                        res.append(-1)
+                except:
+                    print(board)
+                    res.append(-1)
+    for j in range(len(grids) % n_eval):
+        try:
+            val, pol = evaluates[j].stdout.readline().decode().strip().split()
+            val = float(val)
+            pol = int(pol)
+            if abs(val) < mx_value:
+                res.append(pol)
+            else:
+                res.append(-1)
+        except:
+            print(board)
+            res.append(-1)
+    for i in range(n_eval):
+        evaluates[i].kill()
+    return res
 
 def calc_mx(turn):
     if turn < 5:
@@ -252,10 +271,7 @@ while True:
                                 rv.grid = [[i for i in j] for j in grid_bak]
                                 rv.player = player_bak
         mx_val = calc_mx(len(records[player][0]))
-        next_moves = []
-        for grid_tmp, _ in zip(grids, trange(len(grids))):
-            grid = grid_tmp[1]
-            next_moves.append(get_next_move(grid, player, mx_val))
+        next_moves = get_next_move([i[1] for i in grids], player, mx_val)
         records[player] = []
         for i in range(len(grids)):
             if next_moves[i] != -1:
