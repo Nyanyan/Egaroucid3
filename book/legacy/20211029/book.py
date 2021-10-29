@@ -187,37 +187,69 @@ class reversi:
             #print('Draw!', self.nums[0], '-', self.nums[1])
             return -1
 
-evaluate = subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+cmd = ''
+with open('cmd.txt', 'r') as f:
+    cmd = f.read()
+cmd2 = ''
+with open('cmd2.txt', 'r') as f:
+    cmd2 = f.read()
 
-depth = 15
-
-def get_next_move(grid, player, mx_value):
-    global evaluate
-    board = str(player) + '\n' + str(depth) + '\n'
+def get_next_move(grid, player):
+    board = ''
     for y in range(hw):
         for x in range(hw):
-            board += '0' if grid[y][x] == 0 else '1' if grid[y][x] == 1 else '.'
-        board += '\n'
-    #print(board)
-    try:
-        evaluate.stdin.write(board.encode('utf-8'))
-        evaluate.stdin.flush()
-        val, pol = evaluate.stdout.readline().decode().strip().split()
-        val = float(val)
-        pol = int(pol)
-        if abs(val) < mx_value:
-            return pol
+            board += '*' if grid[y][x] == 0 else 'O' if grid[y][x] == 1 else '-'
+    board += ' '
+    board += '*' if player == 0 else 'O'
+    with open('one_board.txt', 'w') as f:
+        f.write(board)
+    mr = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    raw_val = mr.stdout.read().decode().strip().splitlines()
+    val_idx = 0
+    while True:
+        if ':' in raw_val[val_idx]:
+            break
+        val_idx += 1
+    next_move_str = raw_val[val_idx][1:3]
+    y = int(next_move_str[1]) - 1
+    x = ord(next_move_str[0]) - ord('A')
+    return y * hw + x
+
+def que_next_move(grid, player):
+    board = ''
+    for y in range(hw):
+        for x in range(hw):
+            board += '*' if grid[y][x] == 0 else 'O' if grid[y][x] == 1 else '-'
+    board += ' '
+    board += '*' if player == 0 else 'O'
+    with open('some_boards.txt', 'a') as f:
+        f.write(board + '\n')
+
+def exe_que(ln, mx_value):
+    mr = subprocess.run(cmd2.split(), capture_output=True)
+    raw_val = mr.stdout.decode().strip().splitlines()
+    val_idx = 0
+    res = []
+    for _ in range(ln):
+        while True:
+            if ':' in raw_val[val_idx]:
+                break
+            val_idx += 1
+        next_move_value = float(raw_val[val_idx].split()[0][3:])
+        if abs(next_move_value) < mx_value:
+            next_move_str = raw_val[val_idx][1:3]
+            y = int(next_move_str[1]) - 1
+            x = ord(next_move_str[0]) - ord('A')
+            res.append(y * hw + x)
         else:
-            return -1
-    except:
-        evaluate = subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        print(board)
-        return -1
+            res.append(-1)
+        val_idx += 1
+    return res
 
 def calc_mx(turn):
-    if turn < 5:
+    if turn < 9:
         return 1000.0
-    return 0.3 #10.0 / (1.0 + turn) + 3.0
+    return 4.0 #10.0 / (1.0 + turn) + 3.0
 
 book = {}
 records = [[[37]] for _ in range(2)]
@@ -251,11 +283,12 @@ while True:
                                         grids.append([n_record, [[i for i in j] for j in rv.grid]])
                                 rv.grid = [[i for i in j] for j in grid_bak]
                                 rv.player = player_bak
+        with open('some_boards.txt', 'w') as f:
+            f.write('')
+        for _, grid in grids:
+            que_next_move(grid, player)
         mx_val = calc_mx(len(records[player][0]))
-        next_moves = []
-        for grid_tmp, _ in zip(grids, trange(len(grids))):
-            grid = grid_tmp[1]
-            next_moves.append(get_next_move(grid, player, mx_val))
+        next_moves = exe_que(len(grids), mx_val)
         records[player] = []
         for i in range(len(grids)):
             if next_moves[i] != -1:
@@ -265,7 +298,7 @@ while True:
         #print(records)
         print(len(records[player][0]), len(book.keys()), len(records[player]), mx_val)
 
-        with open('learned_data/book_' + str(len(records[player][0])) + '.txt', 'w') as f:
+        with open('param/book_' + str(len(records[player][0])) + '.txt', 'w') as f:
             for record in book.keys():
                 f.write(record[1:] + ' ' + all_chars[book[record]])
 

@@ -77,12 +77,14 @@ def collect_data(num):
         print('cannot open')
         return
     for datum in data:
-        board, result, v1, v2, v3, v4 = datum.split()
+        board, result, v1, v2, v3, v4, v5, v6 = datum.split()
         if min_n_stones <= calc_n_stones(board) < max_n_stones:
             v1 = float(v1)
             v2 = float(v2) / 30
             v3 = float(v3) / 30
             v4 = float(v4) / 30
+            v5 = float(v5) / 30
+            v6 = float(v6) / 30
             result = float(result)
             all_data.append([v1, v2, v3, v4])
             all_labels.append(result)

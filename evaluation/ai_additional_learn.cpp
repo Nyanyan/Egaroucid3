@@ -631,6 +631,20 @@ inline pair<int, int> surround(const board *b){
     return res;
 }
 
+inline int calc_all_stones(const board *b){
+    int res = 0;
+    for (int i = 0; i < hw; ++i)
+        res += count_all_arr[b->b[i]];
+    return res;
+}
+
+inline int calc_dis_stones(const board *b){
+    int res = 0;
+    for (int i = 0; i < hw; ++i)
+        res += count_arr[b->b[i]];
+    return res;
+}
+
 inline int calc_phase_idx(const board *b){
     int turn = -4;
     for (int idx = 0; idx < hw; ++idx)
@@ -1308,7 +1322,7 @@ int main(){
         pair<int, int> surround_res = surround(&b);
         int canput_res = canput(&b);
         double val = evaluate(&b); // BLACK'S MOVE
-        cout << val << " " << canput_res << " " << surround_res.first << " " << surround_res.second << endl;
+        cout << val << " " << canput_res << " " << surround_res.first << " " << surround_res.second << " " << calc_all_stones(&b) << " " << calc_dis_stones(&b) << endl;
     }
     return 0;
 }

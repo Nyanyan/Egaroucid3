@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 150
+#define tl 150000000000
 
 #define hw 8
 #define hw_m1 7
@@ -47,7 +47,7 @@ using namespace std;
 
 #define mpca 1.113598630521083
 #define mpcsd 0.27059419121478845
-#define mpct 1.6
+#define mpct 1.3
 #define mpcwindow 1e-10
 
 #define n_all_input 4
@@ -511,7 +511,7 @@ inline void pre_evaluation(int phase_idx, int evaluate_idx, int pattern_size, do
 }
 
 inline void init_evaluation(){
-    ifstream ifs("evaluation/param/param.txt");
+    ifstream ifs("eval/param.txt");
     if (ifs.fail()){
         cerr << "evaluation file not exist" << endl;
         exit(1);
@@ -1183,7 +1183,7 @@ double nega_scout(const board *b, const long long strt, int skip_cnt, int depth,
     return v;
 }
 
-inline search_result search(const board b){
+inline search_result search(const board b, int d){
     long long strt = tim();
     vector<board> nb;
     for (const int &cell: vacant_lst){
@@ -1203,33 +1203,11 @@ inline search_result search(const board b){
     double alpha, beta, g, value;
     searched_nodes = 0;
     bool break_flag = false;
-    if (b.n >= hw2 - 20){
-        depth = hw2_m1 - b.n;
+    while (depth <= d){
         alpha = -1.5;
         beta = 1.5;
-        for (i = 0; i < canput; ++i)
-            nb[i].v = -canput_exact_evaluate(&nb[i]);
-        if (canput > 1)
-            sort(nb.begin(), nb.end(), move_ordering);
-        for (i = 0; i < canput; ++i){
-            g = -nega_alpha_ordering_final(&nb[i], strt, 0, depth, -beta, -alpha);
-            if (alpha < g){
-                alpha = g;
-                tmp_policy = nb[i].policy;
-            }
-            if (alpha >= 1.0)
-                break;
-        }
-        f_search_table_idx = 1 - f_search_table_idx;
-        policy = tmp_policy;
-        value = max(-1.0, min(1.0, alpha));
-        res_depth = depth + 1;
-        cerr << "depth: " << res_depth << " time: " << tim() - strt << " policy: " << policy << " value: " << value<< " nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / max(1LL, tim() - strt) << endl;
-    } else{
-        while (tim() - strt < tl){
-            alpha = -1.5;
-            beta = 1.5;
-            search_hash_table_init(1 - f_search_table_idx);
+        search_hash_table_init(1 - f_search_table_idx);
+        if (b.n + depth + 1 < hw2){
             for (i = 0; i < canput; ++i){
                 nb[i].v = get_search(nb[i].b, calc_hash(nb[i].b) & search_hash_mask, f_search_table_idx).second;
                 if (nb[i].v == -inf)
@@ -1237,10 +1215,9 @@ inline search_result search(const board b){
                 else if (b.p == 1)
                     nb[i].v = -nb[i].v;
             }
-            if (canput > 1)
+            if (canput)
                 sort(nb.begin(), nb.end(), move_ordering);
             g = -nega_scout(&nb[0], strt, 0, depth, -beta, -alpha);
-            cerr << "a";
             if (g == inf)
                 break;
             alpha = max(alpha, g);
@@ -1271,6 +1248,26 @@ inline search_result search(const board b){
                 cerr << "depth: " << res_depth << " time: " << tim() - strt << " policy: " << policy << " value: " << value<< " nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / max(1LL, tim() - strt) << endl;
                 ++depth;
             }
+        } else{
+            for (i = 0; i < canput; ++i)
+                nb[i].v = -canput_exact_evaluate(&nb[i]);
+            if (canput)
+                sort(nb.begin(), nb.end(), move_ordering);
+            for (i = 0; i < canput; ++i){
+                g = -nega_alpha_ordering_final(&nb[i], strt, 0, depth, -beta, -alpha);
+                if (alpha < g){
+                    alpha = g;
+                    tmp_policy = nb[i].policy;
+                }
+                if (alpha >= 1.0)
+                    break;
+            }
+            f_search_table_idx = 1 - f_search_table_idx;
+            policy = tmp_policy;
+            value = max(-1.0, min(1.0, alpha));
+            res_depth = depth + 1;
+            cerr << "depth: " << res_depth << " time: " << tim() - strt << " policy: " << policy << " value: " << value<< " nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / max(1LL, tim() - strt) << endl;
+            break;
         }
     }
     cerr << "policy: " << policy << " value: " << value << endl;
@@ -1340,7 +1337,7 @@ double calc_result_value(double v){
 int main(){
     int direction, ai_player, policy, n_stones;
     board b;
-    cin >> ai_player;
+    //cin >> ai_player;
     long long strt = tim();
     search_result result;
     cerr << "initializing" << endl;
@@ -1351,65 +1348,21 @@ int main(){
     init_included();
     init_turn_board();
     init_pop_digit();
-    init_book();
+    //init_book();
     init_evaluation();
     f_search_table_idx = 0;
     search_hash_table_init(f_search_table_idx);
     cerr << "iniitialized in " << tim() - strt << " ms" << endl;
-    if (ai_player == 0){
-        direction = 0;
-        string raw_board;
-        for (int i = 0; i < hw; ++i){
-            cin >> raw_board; cin.ignore();
-        }
-        policy = 37;
-        cerr << "FIRST direction " << direction << endl; 
-        cerr << "book policy " << policy << endl;
-        cout << coord_str(policy, direction) << " " << calc_result_value(0.0) << endl;
-    } else {
-        string board_turns[4] = {
-            "...........................10......000..........................",
-            "...........................10......00.......0...................",
-            "..........................000......01...........................",
-            "...................0.......00......01..........................."
-        };
-        string board_str;
-        string tmp;
-        for (int i = 0; i < hw;++i){
-            cin >> tmp; cin.ignore();
-            board_str += tmp;
-        }
-        for (int i = 0; i < 4; ++i){
-            if (board_str == board_turns[i])
-                direction = i;
-        }
-        const int first_board[b_idx_num] = {6560, 6560, 6560, 6425, 6326, 6560, 6560, 6560, 6560, 6560, 6560, 6425, 6344, 6506, 6560, 6560, 6560, 6560, 6560, 6560, 6344, 6425, 6398, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6479, 6344, 6398, 6074, 6560, 6560, 6560};
-        policy = get_book(first_board);
-        cerr << "FIRST direction " << direction << endl;
-        cerr << "book policy " << policy << endl;
-        cout << coord_str(policy, direction) << " " << calc_result_value(0.0) << endl;
-    }
+    direction = 0;
     while (true){
+        cin >> ai_player;
+        int d;
+        cin >> d;
         n_stones = input_board(b.b, direction);
-        cerr << evaluate(&b) << endl;
-        //exit(0);
-        cerr << n_stones - 4 << "moves" << endl;
         b.n = n_stones;
         b.p = ai_player;
-        if (n_stones < book_stones){
-            policy = get_book(b.b);
-            cerr << "book policy " << policy << endl;
-            if (policy != -1){
-                b = move(&b, policy);
-                ++n_stones;
-                result = search(b);
-                cout << coord_str(policy, direction) << " " << calc_result_value(result.value) << endl;
-                continue;
-            }
-        }
-        result = search(b);
-        cerr << "policy " << result.policy << endl;
-        cout << coord_str(result.policy, direction) << " " << calc_result_value(result.value) << endl;
+        result = search(b, d - 1);
+        cout << result.value << " " << result.policy << endl;
     }
     return 0;
 }

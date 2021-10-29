@@ -42,9 +42,9 @@ def collect_data(num):
             #print(board_proc)
             evaluate.stdin.write(board_proc.encode('utf-8'))
             evaluate.stdin.flush()
-            val, canput, sur0, sur1 = evaluate.stdout.readline().decode().strip().split()
+            val, canput, sur0, sur1, al_st, ds_st = evaluate.stdout.readline().decode().strip().split()
             #print(score)
-            new_data.append([board, result, val, canput, sur0, sur1])
+            new_data.append([board, result, val, canput, sur0, sur1, al_st, ds_st])
     return new_data
 
 for i in range(20):
