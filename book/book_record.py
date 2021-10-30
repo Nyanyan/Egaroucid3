@@ -38,6 +38,14 @@ def to_str_record(record):
         res += all_chars[coord]
     return res
 
+def str_to_num(record):
+    res = []
+    for i in range(0, len(record), 2):
+        x = hw - 1 - (ord(record[i]) - ord('A'))
+        y = hw - 1 - (int(record[i + 1]) - 1)
+        res.append(y * hw + x)
+    return res
+
 def to_str_record_human(record):
     res = ''
     for coord in record:
@@ -187,60 +195,95 @@ class reversi:
             #print('Draw!', self.nums[0], '-', self.nums[1])
             return -1
 
+mx_ln = 50
 
-n_eval = 8
+book_all = {}
 
-depth = 10
+with open('third_party/records2.txt', 'r') as f:
+    records = f.read().splitlines()
 
-def get_next_move(grids, player, mx_value):
-    global evaluates
-    evaluates = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(n_eval)]
-    res = []
-    for i, grid in zip(trange(len(grids)), grids):
-        board = str(player) + '\n' + str(depth) + '\n'
-        for y in range(hw):
-            for x in range(hw):
-                board += '0' if grid[y][x] == 0 else '1' if grid[y][x] == 1 else '.'
-            board += '\n'
-        #print(board)
-        evaluates[i % n_eval].stdin.write(board.encode('utf-8'))
-        evaluates[i % n_eval].stdin.flush()
-        if i % n_eval == n_eval - 1:
-            for j in range(n_eval):
-                try:
-                    val, pol = evaluates[j].stdout.readline().decode().strip().split()
-                    val = float(val)
-                    pol = int(pol)
-                    if abs(val) < mx_value:
-                        res.append(pol)
-                    else:
-                        res.append(-1)
-                except:
-                    print(board)
-                    res.append(-1)
-    for j in range(len(grids) % n_eval):
-        try:
-            val, pol = evaluates[j].stdout.readline().decode().strip().split()
-            val = float(val)
-            pol = int(pol)
-            if abs(val) < mx_value:
-                res.append(pol)
+score = 0.0
+for record in records:
+    record_int= []
+    for i in range(0, len(record), 2):
+        x = ord(record[i]) - ord('a')
+        y = int(record[i + 1]) - 1
+        record_int.append(y * hw + x)
+    for i in range(1, min(len(record_int), mx_ln)):
+        record_str = to_str_record(record_int[:i])
+        if not record_str in book_all:
+            x = record_int[i] % hw
+            y = record_int[i] // hw
+            book_all[record_str] = [score, y * hw + x]
+
+print(len(book_all))
+
+with open('third_party/records.txt', 'r') as f:
+    records = f.read().splitlines()
+
+for _, record in zip(trange(len(records)), records):
+    r, s = record.split(' ; ')
+    score = float(s)
+    record = r[:-2]
+    policy = r[-2:]
+    if len(record) > mx_ln * 2:
+        continue
+    if (len(record) // 2) % 2 == 1:
+        score = -score
+    if True: #score >= -5.0:
+        record_int= []
+        for i in range(0, len(record), 2):
+            x = hw - 1 - (ord(record[i]) - ord('A'))
+            y = hw - 1 - (int(record[i + 1]) - 1)
+            record_int.append(y * hw + x)
+        record_str = to_str_record(record_int)
+        if (not record_str in book_all) or book_all[record_str][0] < score:
+            '''
+            rv = reversi()
+            for i in range(0, len(record_int)):
+                if rv.check_pass():
+                    break
+                rv.check_pass()
+                x = record_int[i] % hw
+                y = record_int[i] // hw
+                rv.move(y, x)
             else:
-                res.append(-1)
-        except:
-            print(board)
-            res.append(-1)
-    for i in range(n_eval):
-        evaluates[i].kill()
-    return res
+            '''
+            x = hw - 1 - (ord(policy[0]) - ord('A'))
+            y = hw - 1 - (int(policy[1]) - 1)
+            book_all[record_str] = [score, y * hw + x]
+
+print(len(book_all))
+
+with open('learned_data/book_all.txt', 'w') as f:
+    for record in book_all.keys():
+        f.write(record[1:] + ' ' + all_chars[book_all[record][1]])
+
+#exit()
+
+book_all_keys = set(book_all.keys())
 
 def calc_mx(turn):
-    if turn < 9:
+    return 1000.0
+    if turn < 5:
         return 1000.0
-    return 0.2 #10.0 / (1.0 + turn) + 3.0
+    return 5.0 #10.0 / (1.0 + turn) + 3.0
+
+def get_next_move(records, mx_val):
+    res = []
+    for record in records:
+        if record in book_all_keys:
+            if book_all[record][0] < mx_val:
+                res.append(book_all[record][1])
+            else:
+                res.append(-1)
+        else:
+            res.append(-1)
+    return res
 
 book = {}
 records = [[[37]] for _ in range(2)]
+
 while True:
     for player in reversed(range(2)):
         grids = []
@@ -255,7 +298,7 @@ while True:
                     break
             else:
                 if rv.player == player:
-                    grids.append([[i for i in record], [[i for i in j] for j in rv.grid]])
+                    grids.append([[i for i in record], to_str_record(record)])
                 else:
                     grid_bak = [[i for i in j] for j in rv.grid]
                     player_bak = rv.player
@@ -268,23 +311,25 @@ while True:
                                     if rv.player == player:
                                         n_record = [i for i in record]
                                         n_record.append(y * hw + x)
-                                        grids.append([n_record, [[i for i in j] for j in rv.grid]])
+                                        grids.append([n_record, to_str_record(n_record)])
                                 rv.grid = [[i for i in j] for j in grid_bak]
                                 rv.player = player_bak
         mx_val = calc_mx(len(records[player][0]))
-        next_moves = get_next_move([i[1] for i in grids], player, mx_val)
+        next_moves = get_next_move([grid[1] for grid in grids], mx_val)
         records[player] = []
         for i in range(len(grids)):
             if next_moves[i] != -1:
-                book[to_str_record(grids[i][0])] = next_moves[i]
+                book[grids[i][1]] = next_moves[i]
                 grids[i][0].append(next_moves[i])
                 records[player].append([i for i in grids[i][0]])
-        #print(records)
+        if len(records[player]) == 0:
+            break
         print(len(records[player][0]), len(book.keys()), len(records[player]), mx_val)
 
         with open('learned_data/book_' + str(len(records[player][0])) + '.txt', 'w') as f:
             for record in book.keys():
                 f.write(record[1:] + ' ' + all_chars[book[record]])
-
-
+    else:
+        continue
+    break
 

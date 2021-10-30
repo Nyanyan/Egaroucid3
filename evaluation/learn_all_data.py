@@ -24,7 +24,7 @@ inf = 10000000.0
 
 min_n_stones = 4 + 50
 max_n_stones = 4 + 60
-game_num = 20000
+game_num = 22000
 test_ratio = 0.1
 n_epochs = 200
 n_input = 4

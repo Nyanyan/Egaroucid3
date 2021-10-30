@@ -1,7 +1,7 @@
 from copy import deepcopy
 import tensorflow as tf
 from tensorflow.keras.datasets import boston_housing
-from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, concatenate, Flatten, Dropout, LeakyReLU
+from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, concatenate, Flatten, Dropout, Lambda, LeakyReLU
 from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler, LambdaCallback, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
@@ -15,15 +15,16 @@ from random import randrange
 import subprocess
 import datetime
 import os
-from math import sqrt
 
 inf = 10000000.0
 
 min_n_stones = 4 + 10
 max_n_stones = 4 + 20
-game_num = 30000 #117000
+game_num = 20000 #117000
 test_ratio = 0.1
 n_epochs = 200
+one_board_num = 4
+
 
 line2_idx = [[8, 9, 10, 11, 12, 13, 14, 15], [1, 9, 17, 25, 33, 41, 49, 57], [6, 14, 22, 30, 38, 46, 54, 62], [48, 49, 50, 51, 52, 53, 54, 55]] # line2
 for pattern in deepcopy(line2_idx):
@@ -49,7 +50,7 @@ diagonal7_idx = [[1, 10, 19, 28, 37, 46, 55], [48, 41, 34, 27, 20, 13, 6], [62, 
 for pattern in deepcopy(diagonal7_idx):
     diagonal7_idx.append(list(reversed(pattern)))
 
-diagonal8_idx = [[0, 9, 18, 27, 36, 45, 54, 63], [7, 14, 21, 28, 35, 42, 49, 56]]
+diagonal8_idx = [[0, 9, 18, 27, 36, 45, 54, 63], [0, 9, 18, 27, 36, 45, 54, 63], [7, 14, 21, 28, 35, 42, 49, 56], [7, 14, 21, 28, 35, 42, 49, 56]]
 for pattern in deepcopy(diagonal8_idx):
     diagonal8_idx.append(list(reversed(pattern)))
 
@@ -64,6 +65,13 @@ triangle_idx = [
     [56, 57, 58, 59, 48, 49, 50, 40, 41, 32], [56, 48, 40, 32, 57, 49, 41, 58, 50, 59]
 ]
 
+corner_2edge_idx = [
+    [0, 1, 2, 3, 4, 8, 9, 16, 24, 32], [0, 8, 16, 24, 32, 1, 9, 2, 3, 4],
+    [7, 6, 5, 4, 3, 15, 14, 23, 31, 39], [7, 15, 23, 31, 39, 6, 14, 5, 4, 3],
+    [56, 57, 58, 59, 60, 48, 49, 40, 32, 24], [56, 48, 40, 32, 24, 57, 49, 58, 59, 60],
+    [63, 62, 61, 60, 59, 55, 54, 47, 39, 31], [63, 55, 47, 39, 31, 62, 54, 61, 60, 59]
+]
+
 corner25_idx = [
     [0, 1, 2, 3, 4, 8, 9, 10, 11, 12],[0, 8, 16, 24, 32, 1, 9, 17, 25, 33],
     [7, 6, 5, 4, 3, 15, 14, 13, 12, 11],[7, 15, 23, 31, 39, 6, 14, 22, 30, 38],
@@ -71,16 +79,41 @@ corner25_idx = [
     [63, 62, 61, 60, 59, 55, 54, 53, 52, 51],[63, 55, 47, 39, 31, 62, 54, 46, 38, 30]
 ]
 
+corner9_idx = [
+    [0, 1, 2, 8, 9, 10, 16, 17, 18], [0, 8, 16, 1, 9, 17, 2, 10, 18],
+    [7, 6, 5, 15, 14, 13, 23, 22, 21], [7, 15, 23, 6, 14, 22, 5, 13, 21],
+    [56, 57, 58, 48, 49, 50, 40, 41, 42], [56, 48, 40, 57, 49, 41, 58, 50, 42],
+    [63, 62, 61, 55, 54, 53, 47, 46, 45], [63, 55, 47, 62, 54, 46, 61, 53, 45]
+]
 
-pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, corner25_idx]
-len_patterns = sum(len(i) for i in pattern_idx)
-all_data = [[] for _ in range(len_patterns)]
+edge_block = [
+    [0, 2, 3, 4, 5, 7, 10, 11, 12, 13], [7, 5, 4, 3, 2, 0, 13, 12, 11, 10],
+    [0, 16, 24, 32, 40, 56, 17, 25, 33, 41], [56, 40, 32, 24, 16, 0, 41, 33, 25, 17],
+    [56, 58, 59, 60, 61, 63, 50, 51, 52, 53], [63, 61, 60, 59, 58, 56, 53, 52, 51, 50],
+    [7, 23, 31, 39, 47, 63, 22, 30, 38, 46], [63, 47, 39, 31, 23, 7, 46, 38, 30, 22]
+]
+
+
+#pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, corner25_idx]
+pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, corner9_idx, edge_2x_idx, triangle_idx, edge_block]
+all_data = [[] for _ in range(len(pattern_idx))]
 all_labels = []
+
+def calc_idx(board, patterns):
+    res = []
+    for pattern in patterns:
+        tmp = 0
+        for elem in pattern:
+            tmp *= 3
+            tmp += 0 if board[elem] == '0' else 1 if board[elem] == '1' else 2
+        res.append(tmp)
+    return res
 
 def make_lines(board, patterns):
     res = []
-    for pattern in patterns:
-        #pattern = patterns[randrange(0, 8)]
+    for _ in range(one_board_num):
+        pattern = patterns[randrange(0, 8)]
+        #for pattern in patterns:
         tmp = []
         for elem in pattern:
             tmp.append(1.0 if board[elem] == '0' else 0.0)
@@ -113,43 +146,40 @@ def collect_data(num):
     for datum in data:
         board, score = datum.split()
         if min_n_stones <= calc_n_stones(board) < max_n_stones:
+            #score = float(score)
             score = float(score)
             score = 1.0 if score > 0.0 else -1.0 if score < 0.0 else 0.0
-            #if score != 0:
-            #    score = sqrt(abs(score)) / 8 * score / abs(score)
-            idx = 0
+            '''
+            for i in range(len(pattern_idx)):
+                lines = make_lines(board, pattern_idx[i])
+                all_data[i].extend(lines)
+            for _ in range(8):
+                all_labels.append(score)
+            '''
             for i in range(len(pattern_idx)):
                 lines = make_lines(board, pattern_idx[i])
                 for line in lines:
-                    all_data[idx].append(line)
-                    idx += 1
-            all_labels.append(score)
+                    all_data[i].append(line)
+            for _ in range(one_board_num):
+                all_labels.append(score)
             
 '''
 def LeakyReLU(x):
     return tf.math.maximum(0.01 * x, x)
 '''
 y_all = None
-x = []
-y = []
-names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle', 'corner25']
-#names = ['edge2x', 'triangle']
+x = [None for _ in range(len(pattern_idx))]
+ys = []
+names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diagonal8', 'corner9', 'edge2X', 'triangle', 'edge_block']
 for i in range(len(pattern_idx)):
-    layers = []
-    layers.append(Dense(20))
-    layers.append(LeakyReLU(alpha=0.01))
-    layers.append(Dense(20))
-    layers.append(LeakyReLU(alpha=0.01))
-    layers.append(Dense(1, name=names[i] + '_out'))
-    before_add = []
-    for j in range(len(pattern_idx[i])):
-        x.append(Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in' + str(j)))
-        tmp = x[-1]
-        for layer in layers:
-            tmp = layer(tmp)
-        before_add.append(tmp)
-    y.append(Add(name=names[i] + '_add')(before_add))
-y_all = Add()(y)
+    x[i] = Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in')
+    y = Dense(16)(x[i])
+    y = LeakyReLU(alpha=0.01)(y)
+    y = Dense(16)(y)
+    y = LeakyReLU(alpha=0.01)(y)
+    y = Dense(1, name=names[i] + '_out')(y)
+    ys.append(y)
+y_all = Add()(ys)
 model = Model(inputs=x, outputs=y_all)
 model.summary()
 plot_model(model, to_file='model.png', show_shapes=True)
@@ -172,7 +202,7 @@ test_labels = all_labels[n_train_data:len_data]
 model.compile(loss='mse', metrics='mae', optimizer='adam')
 print(model.evaluate(test_data, test_labels))
 early_stop = EarlyStopping(monitor='val_loss', patience=5)
-model_checkpoint = ModelCheckpoint(filepath=os.path.join('learned_data/models', 'model_{epoch:03d}_{val_loss:.5f}_{val_mae:.5f}.h5'), monitor='val_loss', verbose=1)
+model_checkpoint = ModelCheckpoint(filepath=os.path.join('learned_data/models', 'model_{epoch:02d}_{val_loss:.5f}.h5'), monitor='val_loss', verbose=1)
 history = model.fit(train_data, train_labels, epochs=n_epochs, validation_data=(test_data, test_labels), callbacks=[early_stop, model_checkpoint])
 
 now = datetime.datetime.today()

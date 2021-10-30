@@ -40,7 +40,7 @@ using namespace std;
 #define search_hash_table_size 1048576
 #define search_hash_mask (search_hash_table_size - 1)
 
-#define n_patterns 10
+#define n_patterns 11
 #define n_phases 5
 #define n_dense0 16
 #define n_dense1 16
@@ -516,7 +516,7 @@ inline void init_evaluation(){
     double bias1[n_dense1];
     double dense2[n_dense1];
     double bias2;
-    const int pattern_sizes[n_patterns] = {8, 8, 8, 5, 6, 7, 8, 10, 10, 10};
+    const int pattern_sizes[n_patterns] = {8, 8, 8, 5, 6, 7, 8, 9, 10, 10, 10};
     for (phase_idx = 0; phase_idx < n_phases; ++phase_idx){
         for (pattern_idx = 0; pattern_idx < n_patterns; ++pattern_idx){
             for (i = 0; i < pattern_sizes[pattern_idx] * 2; ++i){
@@ -663,7 +663,7 @@ inline int calc_phase_idx(const board *b){
 inline double evaluate(const board *b){
     int idx, phase_idx;
     phase_idx = calc_phase_idx(b);
-    double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, corner25 = 0.0;
+    double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, corner9 = 0.0, edge_2x = 0.0, triangle = 0.0, edge_block = 0.0;
 
     line2 += evaluate_arr[phase_idx][0][b->b[1]];
     line2 += evaluate_arr[phase_idx][0][b->b[6]];
@@ -724,64 +724,82 @@ inline double evaluate(const board *b){
     diagonal8 += evaluate_arr[phase_idx][6][reverse_board[b->b[21]]];
     diagonal8 += evaluate_arr[phase_idx][6][reverse_board[b->b[32]]];
 
+    idx = b->b[0] / pow3[5] * pow3[6] + b->b[1] / pow3[5] * pow3[3] + b->b[2] / pow3[5];
+    corner9 += evaluate_arr[phase_idx][7][idx];
+    idx = reverse_board[b->b[0]] / pow3[5] * pow3[6] + reverse_board[b->b[1]] / pow3[5] * pow3[3] + reverse_board[b->b[2]] / pow3[5];
+    corner9 += evaluate_arr[phase_idx][7][idx];
+    idx = b->b[7] / pow3[5] * pow3[6] + b->b[6] / pow3[5] * pow3[3] + b->b[5] / pow3[5];
+    corner9 += evaluate_arr[phase_idx][7][idx];
+    idx = reverse_board[b->b[7]] / pow3[5] * pow3[6] + reverse_board[b->b[6]] / pow3[5] * pow3[3] + reverse_board[b->b[5]] / pow3[5];
+    corner9 += evaluate_arr[phase_idx][7][idx];
+    idx = b->b[8] / pow3[5] * pow3[6] + b->b[9] / pow3[5] * pow3[3] + b->b[10] / pow3[5];
+    corner9 += evaluate_arr[phase_idx][7][idx];
+    idx = reverse_board[b->b[8]] / pow3[5] * pow3[6] + reverse_board[b->b[9]] / pow3[5] * pow3[3] + reverse_board[b->b[10]] / pow3[5];
+    corner9 += evaluate_arr[phase_idx][7][idx];
+    idx = b->b[15] / pow3[5] * pow3[6] + b->b[14] / pow3[5] * pow3[3] + b->b[13] / pow3[5];
+    corner9 += evaluate_arr[phase_idx][7][idx];
+    idx = reverse_board[b->b[15]] / pow3[5] * pow3[6] + reverse_board[b->b[14]] / pow3[5] * pow3[3] + reverse_board[b->b[13]] / pow3[5];
+    corner9 += evaluate_arr[phase_idx][7][idx];
+
     idx = pop_digit[b->b[1]][6] * pow3[9] + b->b[0] * pow3[1] + pop_digit[b->b[1]][1];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
+    edge_2x += evaluate_arr[phase_idx][8][idx];
     idx = pop_digit[b->b[1]][1] * pow3[9] + reverse_board[b->b[0]] * pow3[1] + pop_digit[b->b[1]][6];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
+    edge_2x += evaluate_arr[phase_idx][8][idx];
     idx = pop_digit[b->b[6]][6] * pow3[9] + b->b[7] * pow3[1] + pop_digit[b->b[6]][1];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
+    edge_2x += evaluate_arr[phase_idx][8][idx];
     idx = pop_digit[b->b[6]][1] * pow3[9] + reverse_board[b->b[7]] * pow3[1] + pop_digit[b->b[6]][6];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
+    edge_2x += evaluate_arr[phase_idx][8][idx];
     idx = pop_digit[b->b[9]][6] * pow3[9] + b->b[8] * pow3[1] + pop_digit[b->b[9]][1];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
+    edge_2x += evaluate_arr[phase_idx][8][idx];
     idx = pop_digit[b->b[9]][1] * pow3[9] + reverse_board[b->b[8]] * pow3[1] + pop_digit[b->b[9]][6];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
+    edge_2x += evaluate_arr[phase_idx][8][idx];
     idx = pop_digit[b->b[14]][6] * pow3[9] + b->b[15] * pow3[1] + pop_digit[b->b[14]][1];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
+    edge_2x += evaluate_arr[phase_idx][8][idx];
     idx = pop_digit[b->b[14]][1] * pow3[9] + reverse_board[b->b[15]] * pow3[1] + pop_digit[b->b[14]][6];
-    edge_2x += evaluate_arr[phase_idx][7][idx];
+    edge_2x += evaluate_arr[phase_idx][8][idx];
 
     idx = b->b[0] / pow3[4] * pow3[6] + b->b[1] / pow3[5] * pow3[3] + b->b[2] / pow3[6] * pow3[1] + b->b[3] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
+    triangle += evaluate_arr[phase_idx][9][idx];
     idx = reverse_board[b->b[0]] / pow3[4] * pow3[6] + reverse_board[b->b[1]] / pow3[5] * pow3[3] + reverse_board[b->b[2]] / pow3[6] * pow3[1] + reverse_board[b->b[3]] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
+    triangle += evaluate_arr[phase_idx][9][idx];
     idx = b->b[7] / pow3[4] * pow3[6] + b->b[6] / pow3[5] * pow3[3] + b->b[5] / pow3[6] * pow3[1] + b->b[4] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
+    triangle += evaluate_arr[phase_idx][9][idx];
     idx = reverse_board[b->b[7]] / pow3[4] * pow3[6] + reverse_board[b->b[6]] / pow3[5] * pow3[3] + reverse_board[b->b[5]] / pow3[6] * pow3[1] + reverse_board[b->b[4]] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
+    triangle += evaluate_arr[phase_idx][9][idx];
     idx = b->b[8] / pow3[4] * pow3[6] + b->b[9] / pow3[5] * pow3[3] + b->b[10] / pow3[6] * pow3[1] + b->b[11] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
+    triangle += evaluate_arr[phase_idx][9][idx];
     idx = reverse_board[b->b[8]] / pow3[4] * pow3[6] + reverse_board[b->b[9]] / pow3[5] * pow3[3] + reverse_board[b->b[10]] / pow3[6] * pow3[1] + reverse_board[b->b[11]] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
+    triangle += evaluate_arr[phase_idx][9][idx];
     idx = b->b[15] / pow3[4] * pow3[6] + b->b[14] / pow3[5] * pow3[3] + b->b[13] / pow3[6] * pow3[1] + b->b[12] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
+    triangle += evaluate_arr[phase_idx][9][idx];
     idx = reverse_board[b->b[15]] / pow3[4] * pow3[6] + reverse_board[b->b[14]] / pow3[5] * pow3[3] + reverse_board[b->b[13]] / pow3[6] * pow3[1] + reverse_board[b->b[12]] / pow3[7];
-    triangle += evaluate_arr[phase_idx][8][idx];
+    triangle += evaluate_arr[phase_idx][9][idx];
 
-    idx = b->b[0] / pow3[3] * pow3[5] + b->b[1] / pow3[3];
-    corner25 += evaluate_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[0]] / pow3[3] * pow3[5] + reverse_board[b->b[1]] / pow3[3];
-    corner25 += evaluate_arr[phase_idx][9][idx];
-    idx = b->b[7] / pow3[3] * pow3[5] + b->b[6] / pow3[3];
-    corner25 += evaluate_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[7]] / pow3[3] * pow3[5] + reverse_board[b->b[6]] / pow3[3];
-    corner25 += evaluate_arr[phase_idx][9][idx];
-    idx = b->b[8] / pow3[3] * pow3[5] + b->b[9] / pow3[3];
-    corner25 += evaluate_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[8]] / pow3[3] * pow3[5] + reverse_board[b->b[9]] / pow3[3];
-    corner25 += evaluate_arr[phase_idx][9][idx];
-    idx = b->b[15] / pow3[3] * pow3[5] + b->b[14] / pow3[3];
-    corner25 += evaluate_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[15]] / pow3[3] * pow3[5] + reverse_board[b->b[14]] / pow3[3];
-    corner25 += evaluate_arr[phase_idx][9][idx];
+    idx = pop_digit[b->b[0]][0] * pow3[9] + (b->b[0] - b->b[0] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[0]][7] * pow3[4] + (b->b[1] - b->b[1] / pow3[6] * pow3[6]) / pow3[2];
+    edge_block += evaluate_arr[phase_idx][10][idx];
+    idx = pop_digit[b->b[0]][7] * pow3[9] + (reverse_board[b->b[0]] - reverse_board[b->b[0]] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[0]][0] * pow3[4] + (reverse_board[b->b[1]] - reverse_board[b->b[1]] / pow3[6] * pow3[6]) / pow3[2];
+    edge_block += evaluate_arr[phase_idx][10][idx];
+    idx = pop_digit[b->b[7]][0] * pow3[9] + (b->b[7] - b->b[7] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[7]][7] * pow3[4] + (b->b[6] - b->b[6] / pow3[6] * pow3[6]) / pow3[2];
+    edge_block += evaluate_arr[phase_idx][10][idx];
+    idx = pop_digit[b->b[7]][7] * pow3[9] + (reverse_board[b->b[7]] - reverse_board[b->b[7]] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[7]][0] * pow3[4] + (reverse_board[b->b[6]] - reverse_board[b->b[6]] / pow3[6] * pow3[6]) / pow3[2];
+    edge_block += evaluate_arr[phase_idx][10][idx];
+    idx = pop_digit[b->b[8]][0] * pow3[9] + (b->b[8] - b->b[8] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[8]][7] * pow3[4] + (b->b[9] - b->b[9] / pow3[6] * pow3[6]) / pow3[2];
+    edge_block += evaluate_arr[phase_idx][10][idx];
+    idx = pop_digit[b->b[8]][7] * pow3[9] + (reverse_board[b->b[8]] - reverse_board[b->b[8]] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[8]][0] * pow3[4] + (reverse_board[b->b[9]] - reverse_board[b->b[9]] / pow3[6] * pow3[6]) / pow3[2];
+    edge_block += evaluate_arr[phase_idx][10][idx];
+    idx = pop_digit[b->b[15]][0] * pow3[9] + (b->b[15] - b->b[15] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[15]][7] * pow3[4] + (b->b[14] - b->b[14] / pow3[6] * pow3[6]) / pow3[2];
+    edge_block += evaluate_arr[phase_idx][10][idx];
+    idx = pop_digit[b->b[15]][7] * pow3[9] + (reverse_board[b->b[15]] - reverse_board[b->b[15]] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[15]][0] * pow3[4] + (reverse_board[b->b[14]] - reverse_board[b->b[14]] / pow3[6] * pow3[6]) / pow3[2];
+    edge_block += evaluate_arr[phase_idx][10][idx];
 
     //cerr << line2 / 4.0 << " " << line3 / 4.0 << " " << line4 / 4.0 << " " << diagonal5 / 4.0 << " " << diagonal6 / 4.0 << " " << diagonal7 / 4.0 << " " << diagonal8 / 2.0 << " " << edge_2x / 4.0 << " " << triangle / 4.0 << " " << corner25 / 8.0 << endl;
-    res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + corner25 / 8.0;
+    res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + corner9 / 8.0 + edge_2x / 8.0 + triangle / 8.0 + edge_block / 8.0;
     //res = line2 + line3 + line4 + diagonal5 + diagonal6 + diagonal7 + diagonal8 + edge_2x + triangle + corner25;
     //if (b->p == 1)
     //    res = -res;
     //res += canput_evaluate(b) * canput_weight[turn];
-    return min(0.9999, max(-0.9999, res));
+    //return min(0.9999, max(-0.9999, res));
+    return res;
 }
 
 double canput_exact_evaluate(board *b){
@@ -1314,15 +1332,22 @@ int main(){
     search_hash_table_init(f_search_table_idx);
     cerr << "iniitialized in " << tim() - strt << " ms" << endl;
     direction = 0;
+    int d;
     while (true){
         cin >> ai_player;
+        //cin >> d;
         n_stones = input_board(b.b, direction);
         b.n = n_stones;
         b.p = ai_player;
+        
         pair<int, int> surround_res = surround(&b);
         int canput_res = canput(&b);
         double val = evaluate(&b); // BLACK'S MOVE
         cout << val << " " << canput_res << " " << surround_res.first << " " << surround_res.second << " " << calc_all_stones(&b) << " " << calc_dis_stones(&b) << endl;
+        /*
+        result = search(b, d);
+        cout << coord_str(result, direction) << endl;
+        */
     }
     return 0;
 }

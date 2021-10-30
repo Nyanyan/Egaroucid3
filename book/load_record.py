@@ -1,19 +1,10 @@
-import subprocess
 from tqdm import trange
-from copy import deepcopy
 
 hw = 8
 hw2 = 64
 board_index_num = 38
 dy = [0, 1, 0, -1, 1, 1, -1, -1]
 dx = [1, 0, -1, 0, 1, -1, 1, -1]
-
-def digit(n, r):
-    n = str(n)
-    l = len(n)
-    for i in range(r - l):
-        n = '0' + n
-    return n
 
 all_chars = [
     '!', '#', '$', '&', "'", '(', ')', '*', 
@@ -26,24 +17,13 @@ all_chars = [
     '[', ']', '^', '_', '`', 'a', 'b', 'c', 
     'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~']
 
-print(''.join(all_chars[:hw2]))
 
-char_dict = {}
-for i in range(hw2):
-    char_dict[all_chars[i]] = i
-
-def to_str_record(record):
-    res = ''
-    for coord in record:
-        res += all_chars[coord]
-    return res
-
-def to_str_record_human(record):
-    res = ''
-    for coord in record:
-        res += chr(coord % hw + ord('A'))
-        res += str(coord // hw + 1)
-    return res
+def digit(n, r):
+    n = str(n)
+    l = len(n)
+    for i in range(r - l):
+        n = '0' + n
+    return n
 
 def empty(grid, y, x):
     return grid[y][x] == -1 or grid[y][x] == 2
@@ -187,104 +167,48 @@ class reversi:
             #print('Draw!', self.nums[0], '-', self.nums[1])
             return -1
 
-
-n_eval = 8
-
-depth = 10
-
-def get_next_move(grids, player, mx_value):
-    global evaluates
-    evaluates = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(n_eval)]
-    res = []
-    for i, grid in zip(trange(len(grids)), grids):
-        board = str(player) + '\n' + str(depth) + '\n'
-        for y in range(hw):
-            for x in range(hw):
-                board += '0' if grid[y][x] == 0 else '1' if grid[y][x] == 1 else '.'
-            board += '\n'
-        #print(board)
-        evaluates[i % n_eval].stdin.write(board.encode('utf-8'))
-        evaluates[i % n_eval].stdin.flush()
-        if i % n_eval == n_eval - 1:
-            for j in range(n_eval):
-                try:
-                    val, pol = evaluates[j].stdout.readline().decode().strip().split()
-                    val = float(val)
-                    pol = int(pol)
-                    if abs(val) < mx_value:
-                        res.append(pol)
-                    else:
-                        res.append(-1)
-                except:
-                    print(board)
-                    res.append(-1)
-    for j in range(len(grids) % n_eval):
-        try:
-            val, pol = evaluates[j].stdout.readline().decode().strip().split()
-            val = float(val)
-            pol = int(pol)
-            if abs(val) < mx_value:
-                res.append(pol)
-            else:
-                res.append(-1)
-        except:
-            print(board)
-            res.append(-1)
-    for i in range(n_eval):
-        evaluates[i].kill()
-    return res
-
-def calc_mx(turn):
-    if turn < 9:
-        return 1000.0
-    return 0.2 #10.0 / (1.0 + turn) + 3.0
-
-book = {}
-records = [[[37]] for _ in range(2)]
-while True:
-    for player in reversed(range(2)):
-        grids = []
-        for record in records[player]:
-            rv = reversi()
-            for mov in record:
-                y = mov // hw
-                x = mov % hw
-                rv.move(y, x)
-                rv.check_pass()
-                if rv.check_pass():
-                    break
-            else:
-                if rv.player == player:
-                    grids.append([[i for i in record], [[i for i in j] for j in rv.grid]])
-                else:
-                    grid_bak = [[i for i in j] for j in rv.grid]
-                    player_bak = rv.player
-                    for y in range(hw):
-                        for x in range(hw):
-                            if rv.grid[y][x] == 2:
-                                rv.move(y, x)
-                                rv.check_pass()
-                                if not rv.check_pass():
-                                    if rv.player == player:
-                                        n_record = [i for i in record]
-                                        n_record.append(y * hw + x)
-                                        grids.append([n_record, [[i for i in j] for j in rv.grid]])
-                                rv.grid = [[i for i in j] for j in grid_bak]
-                                rv.player = player_bak
-        mx_val = calc_mx(len(records[player][0]))
-        next_moves = get_next_move([i[1] for i in grids], player, mx_val)
-        records[player] = []
-        for i in range(len(grids)):
-            if next_moves[i] != -1:
-                book[to_str_record(grids[i][0])] = next_moves[i]
-                grids[i][0].append(next_moves[i])
-                records[player].append([i for i in grids[i][0]])
-        #print(records)
-        print(len(records[player][0]), len(book.keys()), len(records[player]), mx_val)
-
-        with open('learned_data/book_' + str(len(records[player][0])) + '.txt', 'w') as f:
-            for record in book.keys():
-                f.write(record[1:] + ' ' + all_chars[book[record]])
+def collect_data(num, s):
+    global dict_data
+    record = []
+    rv = reversi()
+    idx = 0
+    turn = 0
+    while True:
+        if idx >= len(s):
+            return
+        if rv.check_pass() and rv.check_pass():
+            break
+        x = ord(s[idx]) - ord('a')
+        y = int(s[idx + 1]) - 1
+        record.append([rv.player, all_chars[y * hw + x]])
+        idx += 2
+        if rv.move(y, x):
+            print('error')
+            exit()
+        if rv.end():
+            break
+    rv.check_pass()
+    #score = 1 if rv.nums[0] > rv.nums[1] else 0 if rv.nums[0] == rv.nums[1] else -1
+    result = rv.nums[0] - rv.nums[1]
+    score = 1 if result > 0 else -1 if result < 0 else 0
+    with open('data/' + digit(num, 7) + '.txt', 'a') as f:
+        for player, policy in record:
+            f.write(str(player) + policy)
+        f.write(' ' + str(score) + '\n')
 
 
-
+games = []
+for year in reversed(range(2000, 2019 + 1)):
+    raw_data = ''
+    with open('third_party/records/' + str(year) + '.csv', 'r', encoding='utf-8-sig') as f:
+        raw_data = f.read()
+    games.extend([i for i in raw_data.splitlines()])
+print(len(games))
+dict_data = {}
+idx = 0
+for i in trange(len(games)):
+    if len(games[i]) == 0:
+        continue
+    collect_data(idx // 1000, games[i])
+    idx += 1
+print(idx)

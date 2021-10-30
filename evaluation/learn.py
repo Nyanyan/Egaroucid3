@@ -1,7 +1,7 @@
 from copy import deepcopy
 import tensorflow as tf
 from tensorflow.keras.datasets import boston_housing
-from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, concatenate, Flatten, Dropout, Lambda
+from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, concatenate, Flatten, Dropout, Lambda, LeakyReLU
 from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.callbacks import EarlyStopping, LearningRateScheduler, LambdaCallback, ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
@@ -18,12 +18,12 @@ import os
 
 inf = 10000000.0
 
-min_n_stones = 4 + 10
-max_n_stones = 4 + 20
-game_num = 10000 #117000
+min_n_stones = 4 + 20
+max_n_stones = 4 + 30
+game_num = 20000 #117000
 test_ratio = 0.1
 n_epochs = 200
-one_board_num = 2
+one_board_num = 4
 
 
 line2_idx = [[8, 9, 10, 11, 12, 13, 14, 15], [1, 9, 17, 25, 33, 41, 49, 57], [6, 14, 22, 30, 38, 46, 54, 62], [48, 49, 50, 51, 52, 53, 54, 55]] # line2
@@ -142,10 +142,10 @@ def collect_data(num):
             for _ in range(one_board_num):
                 all_labels.append(score)
             
-
+'''
 def LeakyReLU(x):
     return tf.math.maximum(0.01 * x, x)
-
+'''
 y_all = None
 x = [None for _ in range(len(pattern_idx))]
 ys = []
@@ -154,9 +154,9 @@ names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diag
 for i in range(len(pattern_idx)):
     x[i] = Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in')
     y = Dense(16)(x[i])
-    y = Lambda(lambda xx: LeakyReLU(xx))(y)
+    y = LeakyReLU(alpha=0.01)(y)
     y = Dense(16)(y)
-    y = Lambda(lambda xx: LeakyReLU(xx))(y)
+    y = LeakyReLU(alpha=0.01)(y)
     y = Dense(1, name=names[i] + '_out')(y)
     ys.append(y)
 y_all = Add()(ys)

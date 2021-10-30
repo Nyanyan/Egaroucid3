@@ -34,26 +34,24 @@ using namespace std;
 
 #define book_hash_table_size 16384
 #define book_hash_mask (book_hash_table_size - 1)
-#define book_stones 55
+#define book_stones 50
 #define ln_repair_book 27
 
 #define search_hash_table_size 1048576
 #define search_hash_mask (search_hash_table_size - 1)
 
-#define n_patterns 11
+#define n_patterns 10
 #define n_phases 5
 #define n_dense0 16
 #define n_dense1 16
 
-#define mpca 1.1125516949669991
-#define mpcsd 0.2624969271656262
-#define mpct 1.0
+#define mpca 1.113598630521083
+#define mpcsd 0.27059419121478845
+#define mpct 1.6
 #define mpcwindow 1e-10
 
 #define n_all_input 4
 #define n_all_dense0 16
-
-#define win_read_depth 20
 
 struct board{
     int b[b_idx_num];
@@ -97,6 +95,7 @@ bool legal_arr[2][n_line][hw];
 int flip_arr[2][n_line][hw];
 int put_arr[2][n_line][hw];
 int local_place[b_idx_num][hw2];
+int turn_board[4][hw2];
 const double cell_weight[hw2] = {
     0.2880, -0.1150, 0.0000, -0.0096, -0.0096, 0.0000, -0.1150, 0.2880,
     -0.1150, -0.1542, -0.0288, -0.0288, -0.0288, -0.0288, -0.1542, -0.1150,
@@ -325,6 +324,18 @@ inline void init_included(){
     }
 }
 
+inline void init_turn_board(){
+    int i, j;
+    for (i = 0; i < hw; ++i){
+        for (j = 0; j < hw; ++j){
+            turn_board[0][i * hw + j] = i * hw + j;
+            turn_board[1][i * hw + j] = j * hw + i;
+            turn_board[2][i * hw + j] = (hw_m1 - i) * hw + (hw_m1 - j);
+            turn_board[3][i * hw + j] = (hw_m1 - j) * hw + (hw_m1 - i);
+        }
+    }
+}
+
 inline void init_pop_digit(){
     int i, j;
     for (i = 0; i < n_line; ++i){
@@ -432,8 +443,6 @@ inline void init_book(){
     book_hash_table_init(book);
     int data_idx = 0;
     int n_book = 0;
-    int y, x;
-    int tmp[16];
     while (data_idx < ln){
         fb.p = 1;
         for (i = 0; i < b_idx_num; ++i)
@@ -447,31 +456,10 @@ inline void init_book(){
             fb = move(&fb, coord);
         }
         coord = char_keys[param_compressed1[data_idx++]];
-        y = coord / hw;
-        x = coord % hw;
-        //cerr << y * hw + x << endl;
+        //cerr << coord << endl;
         //print_board(fb.b);
-        register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, y * hw + x);
-        for (i = 0; i < 8; ++i)
-            swap(fb.b[i], fb.b[8 + i]);
-        //cerr << x * hw + y << endl;
-        //print_board(fb.b);
-        register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, x * hw + y);
-        for (i = 0; i < 16; ++i)
-            tmp[i] = fb.b[i];
-        for (i = 0; i < 8; ++i)
-            fb.b[i] = reverse_board[tmp[7 - i]];
-        for (i = 0; i < 8; ++i)
-            fb.b[8 + i] = reverse_board[tmp[15 - i]];
-        //cerr << (hw_m1 - x) * hw + (hw_m1 - y) << endl;
-        //print_board(fb.b);
-        register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, (hw_m1 - x) * hw + (hw_m1 - y));
-        for (i = 0; i < 8; ++i)
-            swap(fb.b[i], fb.b[8 + i]);
-        //cerr << (hw_m1 - y) * hw + (hw_m1 - x) << endl;
-        //print_board(fb.b);
-        register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, (hw_m1 - y) * hw + (hw_m1 - x));
-        n_book += 4;
+        register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, coord);
+        ++n_book;
     }
     cerr << n_book << " boards in book" << endl;
 }
@@ -536,7 +524,7 @@ inline void init_evaluation(){
     double bias1[n_dense1];
     double dense2[n_dense1];
     double bias2;
-    const int pattern_sizes[n_patterns] = {8, 8, 8, 5, 6, 7, 8, 9, 10, 10, 10};
+    const int pattern_sizes[n_patterns] = {8, 8, 8, 5, 6, 7, 8, 10, 10, 10};
     for (phase_idx = 0; phase_idx < n_phases; ++phase_idx){
         for (pattern_idx = 0; pattern_idx < n_patterns; ++pattern_idx){
             for (i = 0; i < pattern_sizes[pattern_idx] * 2; ++i){
@@ -690,7 +678,7 @@ inline int calc_phase_idx(const board *b){
 inline double calc_pattern(const board *b){
     int idx, phase_idx;
     phase_idx = calc_phase_idx(b);
-    double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, corner9 = 0.0, edge_2x = 0.0, triangle = 0.0, edge_block = 0.0;
+    double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, corner25 = 0.0;
 
     line2 += evaluate_arr[phase_idx][0][b->b[1]];
     line2 += evaluate_arr[phase_idx][0][b->b[6]];
@@ -751,76 +739,59 @@ inline double calc_pattern(const board *b){
     diagonal8 += evaluate_arr[phase_idx][6][reverse_board[b->b[21]]];
     diagonal8 += evaluate_arr[phase_idx][6][reverse_board[b->b[32]]];
 
-    idx = b->b[0] / pow3[5] * pow3[6] + b->b[1] / pow3[5] * pow3[3] + b->b[2] / pow3[5];
-    corner9 += evaluate_arr[phase_idx][7][idx];
-    idx = reverse_board[b->b[0]] / pow3[5] * pow3[6] + reverse_board[b->b[1]] / pow3[5] * pow3[3] + reverse_board[b->b[2]] / pow3[5];
-    corner9 += evaluate_arr[phase_idx][7][idx];
-    idx = b->b[7] / pow3[5] * pow3[6] + b->b[6] / pow3[5] * pow3[3] + b->b[5] / pow3[5];
-    corner9 += evaluate_arr[phase_idx][7][idx];
-    idx = reverse_board[b->b[7]] / pow3[5] * pow3[6] + reverse_board[b->b[6]] / pow3[5] * pow3[3] + reverse_board[b->b[5]] / pow3[5];
-    corner9 += evaluate_arr[phase_idx][7][idx];
-    idx = b->b[8] / pow3[5] * pow3[6] + b->b[9] / pow3[5] * pow3[3] + b->b[10] / pow3[5];
-    corner9 += evaluate_arr[phase_idx][7][idx];
-    idx = reverse_board[b->b[8]] / pow3[5] * pow3[6] + reverse_board[b->b[9]] / pow3[5] * pow3[3] + reverse_board[b->b[10]] / pow3[5];
-    corner9 += evaluate_arr[phase_idx][7][idx];
-    idx = b->b[15] / pow3[5] * pow3[6] + b->b[14] / pow3[5] * pow3[3] + b->b[13] / pow3[5];
-    corner9 += evaluate_arr[phase_idx][7][idx];
-    idx = reverse_board[b->b[15]] / pow3[5] * pow3[6] + reverse_board[b->b[14]] / pow3[5] * pow3[3] + reverse_board[b->b[13]] / pow3[5];
-    corner9 += evaluate_arr[phase_idx][7][idx];
-
     idx = pop_digit[b->b[1]][6] * pow3[9] + b->b[0] * pow3[1] + pop_digit[b->b[1]][1];
-    edge_2x += evaluate_arr[phase_idx][8][idx];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[1]][1] * pow3[9] + reverse_board[b->b[0]] * pow3[1] + pop_digit[b->b[1]][6];
-    edge_2x += evaluate_arr[phase_idx][8][idx];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[6]][6] * pow3[9] + b->b[7] * pow3[1] + pop_digit[b->b[6]][1];
-    edge_2x += evaluate_arr[phase_idx][8][idx];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[6]][1] * pow3[9] + reverse_board[b->b[7]] * pow3[1] + pop_digit[b->b[6]][6];
-    edge_2x += evaluate_arr[phase_idx][8][idx];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[9]][6] * pow3[9] + b->b[8] * pow3[1] + pop_digit[b->b[9]][1];
-    edge_2x += evaluate_arr[phase_idx][8][idx];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[9]][1] * pow3[9] + reverse_board[b->b[8]] * pow3[1] + pop_digit[b->b[9]][6];
-    edge_2x += evaluate_arr[phase_idx][8][idx];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[14]][6] * pow3[9] + b->b[15] * pow3[1] + pop_digit[b->b[14]][1];
-    edge_2x += evaluate_arr[phase_idx][8][idx];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
     idx = pop_digit[b->b[14]][1] * pow3[9] + reverse_board[b->b[15]] * pow3[1] + pop_digit[b->b[14]][6];
-    edge_2x += evaluate_arr[phase_idx][8][idx];
+    edge_2x += evaluate_arr[phase_idx][7][idx];
 
     idx = b->b[0] / pow3[4] * pow3[6] + b->b[1] / pow3[5] * pow3[3] + b->b[2] / pow3[6] * pow3[1] + b->b[3] / pow3[7];
-    triangle += evaluate_arr[phase_idx][9][idx];
+    triangle += evaluate_arr[phase_idx][8][idx];
     idx = reverse_board[b->b[0]] / pow3[4] * pow3[6] + reverse_board[b->b[1]] / pow3[5] * pow3[3] + reverse_board[b->b[2]] / pow3[6] * pow3[1] + reverse_board[b->b[3]] / pow3[7];
-    triangle += evaluate_arr[phase_idx][9][idx];
+    triangle += evaluate_arr[phase_idx][8][idx];
     idx = b->b[7] / pow3[4] * pow3[6] + b->b[6] / pow3[5] * pow3[3] + b->b[5] / pow3[6] * pow3[1] + b->b[4] / pow3[7];
-    triangle += evaluate_arr[phase_idx][9][idx];
+    triangle += evaluate_arr[phase_idx][8][idx];
     idx = reverse_board[b->b[7]] / pow3[4] * pow3[6] + reverse_board[b->b[6]] / pow3[5] * pow3[3] + reverse_board[b->b[5]] / pow3[6] * pow3[1] + reverse_board[b->b[4]] / pow3[7];
-    triangle += evaluate_arr[phase_idx][9][idx];
+    triangle += evaluate_arr[phase_idx][8][idx];
     idx = b->b[8] / pow3[4] * pow3[6] + b->b[9] / pow3[5] * pow3[3] + b->b[10] / pow3[6] * pow3[1] + b->b[11] / pow3[7];
-    triangle += evaluate_arr[phase_idx][9][idx];
+    triangle += evaluate_arr[phase_idx][8][idx];
     idx = reverse_board[b->b[8]] / pow3[4] * pow3[6] + reverse_board[b->b[9]] / pow3[5] * pow3[3] + reverse_board[b->b[10]] / pow3[6] * pow3[1] + reverse_board[b->b[11]] / pow3[7];
-    triangle += evaluate_arr[phase_idx][9][idx];
+    triangle += evaluate_arr[phase_idx][8][idx];
     idx = b->b[15] / pow3[4] * pow3[6] + b->b[14] / pow3[5] * pow3[3] + b->b[13] / pow3[6] * pow3[1] + b->b[12] / pow3[7];
-    triangle += evaluate_arr[phase_idx][9][idx];
+    triangle += evaluate_arr[phase_idx][8][idx];
     idx = reverse_board[b->b[15]] / pow3[4] * pow3[6] + reverse_board[b->b[14]] / pow3[5] * pow3[3] + reverse_board[b->b[13]] / pow3[6] * pow3[1] + reverse_board[b->b[12]] / pow3[7];
-    triangle += evaluate_arr[phase_idx][9][idx];
+    triangle += evaluate_arr[phase_idx][8][idx];
 
-    idx = pop_digit[b->b[0]][0] * pow3[9] + (b->b[0] - b->b[0] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[0]][7] * pow3[4] + (b->b[1] - b->b[1] / pow3[6] * pow3[6]) / pow3[2];
-    edge_block += evaluate_arr[phase_idx][10][idx];
-    idx = pop_digit[b->b[0]][7] * pow3[9] + (reverse_board[b->b[0]] - reverse_board[b->b[0]] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[0]][0] * pow3[4] + (reverse_board[b->b[1]] - reverse_board[b->b[1]] / pow3[6] * pow3[6]) / pow3[2];
-    edge_block += evaluate_arr[phase_idx][10][idx];
-    idx = pop_digit[b->b[7]][0] * pow3[9] + (b->b[7] - b->b[7] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[7]][7] * pow3[4] + (b->b[6] - b->b[6] / pow3[6] * pow3[6]) / pow3[2];
-    edge_block += evaluate_arr[phase_idx][10][idx];
-    idx = pop_digit[b->b[7]][7] * pow3[9] + (reverse_board[b->b[7]] - reverse_board[b->b[7]] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[7]][0] * pow3[4] + (reverse_board[b->b[6]] - reverse_board[b->b[6]] / pow3[6] * pow3[6]) / pow3[2];
-    edge_block += evaluate_arr[phase_idx][10][idx];
-    idx = pop_digit[b->b[8]][0] * pow3[9] + (b->b[8] - b->b[8] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[8]][7] * pow3[4] + (b->b[9] - b->b[9] / pow3[6] * pow3[6]) / pow3[2];
-    edge_block += evaluate_arr[phase_idx][10][idx];
-    idx = pop_digit[b->b[8]][7] * pow3[9] + (reverse_board[b->b[8]] - reverse_board[b->b[8]] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[8]][0] * pow3[4] + (reverse_board[b->b[9]] - reverse_board[b->b[9]] / pow3[6] * pow3[6]) / pow3[2];
-    edge_block += evaluate_arr[phase_idx][10][idx];
-    idx = pop_digit[b->b[15]][0] * pow3[9] + (b->b[15] - b->b[15] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[15]][7] * pow3[4] + (b->b[14] - b->b[14] / pow3[6] * pow3[6]) / pow3[2];
-    edge_block += evaluate_arr[phase_idx][10][idx];
-    idx = pop_digit[b->b[15]][7] * pow3[9] + (reverse_board[b->b[15]] - reverse_board[b->b[15]] / pow3[6] * pow3[6]) / pow3[2] * pow3[5] + pop_digit[b->b[15]][0] * pow3[4] + (reverse_board[b->b[14]] - reverse_board[b->b[14]] / pow3[6] * pow3[6]) / pow3[2];
-    edge_block += evaluate_arr[phase_idx][10][idx];
+    idx = b->b[0] / pow3[3] * pow3[5] + b->b[1] / pow3[3];
+    corner25 += evaluate_arr[phase_idx][9][idx];
+    idx = reverse_board[b->b[0]] / pow3[3] * pow3[5] + reverse_board[b->b[1]] / pow3[3];
+    corner25 += evaluate_arr[phase_idx][9][idx];
+    idx = b->b[7] / pow3[3] * pow3[5] + b->b[6] / pow3[3];
+    corner25 += evaluate_arr[phase_idx][9][idx];
+    idx = reverse_board[b->b[7]] / pow3[3] * pow3[5] + reverse_board[b->b[6]] / pow3[3];
+    corner25 += evaluate_arr[phase_idx][9][idx];
+    idx = b->b[8] / pow3[3] * pow3[5] + b->b[9] / pow3[3];
+    corner25 += evaluate_arr[phase_idx][9][idx];
+    idx = reverse_board[b->b[8]] / pow3[3] * pow3[5] + reverse_board[b->b[9]] / pow3[3];
+    corner25 += evaluate_arr[phase_idx][9][idx];
+    idx = b->b[15] / pow3[3] * pow3[5] + b->b[14] / pow3[3];
+    corner25 += evaluate_arr[phase_idx][9][idx];
+    idx = reverse_board[b->b[15]] / pow3[3] * pow3[5] + reverse_board[b->b[14]] / pow3[3];
+    corner25 += evaluate_arr[phase_idx][9][idx];
 
     //cerr << line2 / 4.0 << " " << line3 / 4.0 << " " << line4 / 4.0 << " " << diagonal5 / 4.0 << " " << diagonal6 / 4.0 << " " << diagonal7 / 4.0 << " " << diagonal8 / 2.0 << " " << edge_2x / 4.0 << " " << triangle / 4.0 << " " << corner25 / 8.0 << endl;
-    res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + corner9 / 8.0 + edge_2x / 8.0 + triangle / 8.0 + edge_block / 8.0;
+    res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + corner25 / 8.0;
     //res = line2 + line3 + line4 + diagonal5 + diagonal6 + diagonal7 + diagonal8 + edge_2x + triangle + corner25;
     //if (b->p == 1)
     //    res = -res;
@@ -1232,13 +1203,12 @@ inline search_result search(const board b){
     double alpha, beta, g, value;
     searched_nodes = 0;
     bool break_flag = false;
-    bool normal_flag = false;
-    if (b.n >= hw2 - win_read_depth){
+    if (b.n >= hw2 - 20){
         depth = hw2_m1 - b.n;
         alpha = -1.5;
         beta = 1.5;
         for (i = 0; i < canput; ++i)
-            nb[i].v = -canput_exact_evaluate(&nb[i]) - 3.0 * evaluate(&nb[i]);
+            nb[i].v = -canput_exact_evaluate(&nb[i]);
         if (canput > 1)
             sort(nb.begin(), nb.end(), move_ordering);
         for (i = 0; i < canput; ++i){
@@ -1255,12 +1225,7 @@ inline search_result search(const board b){
         value = max(-1.0, min(1.0, alpha));
         res_depth = depth + 1;
         cerr << "depth: " << res_depth << " time: " << tim() - strt << " policy: " << policy << " value: " << value<< " nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / max(1LL, tim() - strt) << endl;
-        if (value == -1.0){
-            depth = 4;
-            normal_flag = true;
-        }
-    }
-    if (b.n < hw2 - win_read_depth || normal_flag){
+    } else{
         while (tim() - strt < tl){
             alpha = -1.5;
             beta = 1.5;
@@ -1275,6 +1240,7 @@ inline search_result search(const board b){
             if (canput > 1)
                 sort(nb.begin(), nb.end(), move_ordering);
             g = -nega_scout(&nb[0], strt, 0, depth, -beta, -alpha);
+            cerr << "a";
             if (g == inf)
                 break;
             alpha = max(alpha, g);
@@ -1297,8 +1263,6 @@ inline search_result search(const board b){
                     }
                 }
             }
-            if (normal_flag && alpha == -1.0)
-                break;
             if (!break_flag){
                 f_search_table_idx = 1 - f_search_table_idx;
                 policy = tmp_policy;
@@ -1309,8 +1273,6 @@ inline search_result search(const board b){
             }
         }
     }
-    if (normal_flag)
-        value = -1.0;
     cerr << "policy: " << policy << " value: " << value << endl;
     search_result res;
     res.policy = policy;
@@ -1319,11 +1281,11 @@ inline search_result search(const board b){
     return res;
 }
 
-inline string coord_str(int policy){
+inline string coord_str(int policy, int direction){
     string res;
-    res += to_string(policy / hw);
+    res += to_string(turn_board[direction][policy] / hw);
     res += " ";
-    res += to_string(policy % hw);
+    res += to_string(turn_board[direction][policy] % hw);
     return res;
 }
 
@@ -1331,7 +1293,7 @@ int cmp_vacant(int p, int q){
     return cell_weight[p] > cell_weight[q];
 }
 
-inline int input_board(int (&board)[b_idx_num]){
+inline int input_board(int (&board)[b_idx_num], int direction){
     int i, j;
     unsigned long long b = 0, w = 0;
     char elem;
@@ -1344,11 +1306,11 @@ inline int input_board(int (&board)[b_idx_num]){
         for (j = 0; j < hw; ++j){
             elem = raw_board[j];
             if (elem != '.'){
-                b |= (unsigned long long)(elem == '0') << (i * hw + j);
-                w |= (unsigned long long)(elem == '1') << (i * hw + j);
+                b |= (unsigned long long)(elem == '0') << turn_board[direction][i * hw + j];
+                w |= (unsigned long long)(elem == '1') << turn_board[direction][i * hw + j];
                 ++n_stones;
             } else{
-                vacant_lst.push_back(i * hw + j);
+                vacant_lst.push_back(turn_board[direction][i * hw + j]);
             }
         }
     }
@@ -1376,7 +1338,7 @@ double calc_result_value(double v){
 }
 
 int main(){
-    int ai_player, policy, n_stones;
+    int direction, ai_player, policy, n_stones;
     board b;
     cin >> ai_player;
     long long strt = tim();
@@ -1387,6 +1349,7 @@ int main(){
     init_move();
     init_local_place();
     init_included();
+    init_turn_board();
     init_pop_digit();
     init_book();
     init_evaluation();
@@ -1394,16 +1357,40 @@ int main(){
     search_hash_table_init(f_search_table_idx);
     cerr << "iniitialized in " << tim() - strt << " ms" << endl;
     if (ai_player == 0){
+        direction = 0;
         string raw_board;
         for (int i = 0; i < hw; ++i){
             cin >> raw_board; cin.ignore();
         }
         policy = 37;
+        cerr << "FIRST direction " << direction << endl; 
         cerr << "book policy " << policy << endl;
-        cout << coord_str(policy) << " " << calc_result_value(0.0) << endl;
+        cout << coord_str(policy, direction) << " " << calc_result_value(0.0) << endl;
+    } else {
+        string board_turns[4] = {
+            "...........................10......000..........................",
+            "...........................10......00.......0...................",
+            "..........................000......01...........................",
+            "...................0.......00......01..........................."
+        };
+        string board_str;
+        string tmp;
+        for (int i = 0; i < hw;++i){
+            cin >> tmp; cin.ignore();
+            board_str += tmp;
+        }
+        for (int i = 0; i < 4; ++i){
+            if (board_str == board_turns[i])
+                direction = i;
+        }
+        const int first_board[b_idx_num] = {6560, 6560, 6560, 6425, 6326, 6560, 6560, 6560, 6560, 6560, 6560, 6425, 6344, 6506, 6560, 6560, 6560, 6560, 6560, 6560, 6344, 6425, 6398, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6560, 6479, 6344, 6398, 6074, 6560, 6560, 6560};
+        policy = get_book(first_board);
+        cerr << "FIRST direction " << direction << endl;
+        cerr << "book policy " << policy << endl;
+        cout << coord_str(policy, direction) << " " << calc_result_value(0.0) << endl;
     }
     while (true){
-        n_stones = input_board(b.b);
+        n_stones = input_board(b.b, direction);
         cerr << evaluate(&b) << endl;
         //exit(0);
         cerr << n_stones - 4 << "moves" << endl;
@@ -1416,13 +1403,13 @@ int main(){
                 b = move(&b, policy);
                 ++n_stones;
                 result = search(b);
-                cout << coord_str(policy) << " " << calc_result_value(result.value) << endl;
+                cout << coord_str(policy, direction) << " " << calc_result_value(result.value) << endl;
                 continue;
             }
         }
         result = search(b);
         cerr << "policy " << result.policy << endl;
-        cout << coord_str(result.policy) << " " << calc_result_value(result.value) << endl;
+        cout << coord_str(result.policy, direction) << " " << calc_result_value(result.value) << endl;
     }
     return 0;
 }

@@ -1,10 +1,8 @@
-from tqdm import trange
+from random import randrange
+
 
 hw = 8
 hw2 = 64
-board_index_num = 38
-dy = [0, 1, 0, -1, 1, 1, -1, -1]
-dx = [1, 0, -1, 0, 1, -1, 1, -1]
 
 def digit(n, r):
     n = str(n)
@@ -155,54 +153,3 @@ class reversi:
             #print('Draw!', self.nums[0], '-', self.nums[1])
             return -1
 
-def collect_data(num, s):
-    global dict_data
-    grids = []
-    rv = reversi()
-    idx = 0
-    turn = 0
-    while True:
-        if idx >= len(s):
-            return
-        if rv.check_pass() and rv.check_pass():
-            break
-        x = ord(s[idx]) - ord('a')
-        y = int(s[idx + 1]) - 1
-        idx += 2
-        if turn < 64:
-            grid_str = ''
-            for i in range(hw):
-                for j in range(hw):
-                    grid_str += '0' if rv.grid[i][j] == 0 else '1' if rv.grid[i][j] == 1 else '.'
-            grids.append(grid_str)
-        if rv.move(y, x):
-            print('error')
-            exit()
-        turn += 1
-        if rv.end():
-            break
-    rv.check_pass()
-    #score = 1 if rv.nums[0] > rv.nums[1] else 0 if rv.nums[0] == rv.nums[1] else -1
-    result = rv.nums[0] - rv.nums[1]
-    #score = 1 if result > 0 else -1 if result < 0 else 0
-    score = result
-    with open('data_stones/' + digit(num, 7) + '.txt', 'a') as f:
-        for grid in grids:
-            f.write(grid + ' ' + str(score) + '\n')
-
-
-games = []
-for year in reversed(range(2000, 2019 + 1)):
-    raw_data = ''
-    with open('third_party/records/' + str(year) + '.csv', 'r', encoding='utf-8-sig') as f:
-        raw_data = f.read()
-    games.extend([i for i in raw_data.splitlines()])
-print(len(games))
-dict_data = {}
-idx = 0
-for i in trange(len(games)):
-    if len(games[i]) == 0:
-        continue
-    collect_data(idx // 1000, games[i])
-    idx += 1
-print(idx)

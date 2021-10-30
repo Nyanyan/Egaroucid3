@@ -47,7 +47,7 @@ def collect_data(num):
             new_data.append([board, result, val, canput, sur0, sur1, al_st, ds_st])
     return new_data
 
-for i in range(20):
+for i in range(30):
     data = collect_data(i)
     with open('data_additional/' + digit(i, 7) + '.txt', 'w') as f:
         for datum in data:
