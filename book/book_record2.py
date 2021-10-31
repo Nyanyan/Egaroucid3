@@ -75,7 +75,9 @@ inf = 100000000
 def calc_value(r):
     if record_all[r][0] < num_threshold:
         return -inf
-    val = 0.01 * record_all[r][0] + record_all[r][1] / record_all[r][0]
+    if record_all[r][1] / record_all[r][0] < -0.1:
+        return -inf
+    val = 0.1 * record_all[r][0] + record_all[r][1] / record_all[r][0]
     #print(r, record_all[r], val)
     return val
 

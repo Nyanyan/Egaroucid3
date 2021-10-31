@@ -18,12 +18,12 @@ import os
 
 inf = 10000000.0
 
-min_n_stones = 4 + 20
-max_n_stones = 4 + 30
-game_num = 20000 #117000
+min_n_stones = 4 + 10
+max_n_stones = 4 + 20
+game_num = 65000 #117000
 test_ratio = 0.1
 n_epochs = 200
-one_board_num = 4
+one_board_num = 1
 
 
 line2_idx = [[8, 9, 10, 11, 12, 13, 14, 15], [1, 9, 17, 25, 33, 41, 49, 57], [6, 14, 22, 30, 38, 46, 54, 62], [48, 49, 50, 51, 52, 53, 54, 55]] # line2
@@ -71,6 +71,15 @@ corner25_idx = [
     [56, 57, 58, 59, 60, 48, 49, 50, 51, 52],[56, 48, 40, 32, 24, 57, 49, 41, 33, 25],
     [63, 62, 61, 60, 59, 55, 54, 53, 52, 51],[63, 55, 47, 39, 31, 62, 54, 46, 38, 30]
 ]
+
+center16_idx = [
+    [18, 19, 20, 21, 26, 27, 28, 29, 34, 35, 36, 37, 42, 43, 44, 45],
+    [21, 20, 19, 18, 29, 28, 27, 26, 37, 36, 35, 34, 45, 44, 43, 42],
+    [18, 26, 34, 42, 19, 27, 35, 43, 20, 28, 36, 44, 21, 29, 37, 45],
+    [21, 29, 37, 45, 20, 28, 36, 44, 19, 27, 35, 43, 18, 26, 34, 42]
+]
+for pattern in deepcopy(center16_idx):
+    center16_idx.append(list(reversed(pattern)))
 
 
 pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, corner25_idx]

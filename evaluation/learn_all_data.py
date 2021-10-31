@@ -27,7 +27,7 @@ max_n_stones = 4 + 60
 game_num = 22000
 test_ratio = 0.1
 n_epochs = 200
-n_input = 4
+n_input = 3
 
 all_data = []
 all_labels = []
@@ -86,12 +86,12 @@ def collect_data(num):
             v5 = float(v5) / 30
             v6 = float(v6) / 30
             result = float(result)
-            all_data.append([v1, v2, v3, v4])
+            all_data.append([v1, v3, v4])
             all_labels.append(result)
 
 
 x = Input(shape=(n_input))
-y = Dense(16)(x)
+y = Dense(8)(x)
 y = LeakyReLU(y)
 y = Dense(1)(y)
 
