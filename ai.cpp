@@ -53,7 +53,7 @@ using namespace std;
 #define n_all_input 4
 #define n_all_dense0 16
 
-#define win_read_depth 20
+#define win_read_depth 21
 
 struct board{
     int b[b_idx_num];
