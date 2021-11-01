@@ -18,8 +18,8 @@ import os
 
 inf = 10000000.0
 
-min_n_stones = 4 + 15
-max_n_stones = 4 + 30
+min_n_stones = 4 + 50
+max_n_stones = 4 + 60
 game_num = 117000
 test_ratio = 0.1
 n_epochs = 200
@@ -102,8 +102,8 @@ cross_idx = [
     [63, 54, 45, 36, 62, 53, 44, 55, 46, 37], [63, 54, 45, 36, 55, 46, 37, 62, 53, 44]
 ]
 
-pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, corner25_idx]
-#pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, edge_block, cross_idx]
+#pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, corner25_idx]
+pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, edge_block, cross_idx]
 all_data = [[] for _ in range(len(pattern_idx))]
 all_labels = []
 
@@ -178,8 +178,8 @@ def LeakyReLU(x):
 y_all = None
 x = [None for _ in range(len(pattern_idx))]
 ys = []
-#names = ['line2', 'line3', 'line4', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle', 'edge_block', 'cross']
-names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle', 'corner25']
+names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle', 'edgeblock', 'cross']
+#names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle', 'corner25']
 #names = ['edge2x', 'triangle']
 for i in range(len(pattern_idx)):
     x[i] = Input(shape=(len(pattern_idx[i][0]) * 2), name=names[i] + '_in')

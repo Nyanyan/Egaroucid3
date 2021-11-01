@@ -38,7 +38,8 @@ names = [
     'dense_12', 'dense_13', 'diagonal8_out',    # 6
     'dense_14', 'dense_15', 'edge2X_out',       # 7
     'dense_16', 'dense_17', 'triangle_out',     # 8
-    'dense_18', 'dense_19', 'corner25_out'      # 9
+    'dense_18', 'dense_19', 'edgeblock_out',    # 9
+    'dense_20', 'dense_21', 'cross_out',    # 9
 ]
 
 with open('learned_data/' + sys.argv[2], 'w') as f:

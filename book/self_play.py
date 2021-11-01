@@ -185,6 +185,7 @@ def create_data(num):
             s_in += '\n'
         ais[rv.player].stdin.write(s_in.encode('utf-8'))
         ais[rv.player].stdin.flush()
+        #print(s_in)
         y, x, _ = [i for i in ais[rv.player].stdout.readline().split()]
         y = int(y)
         x = int(x)
@@ -207,8 +208,8 @@ def create_data(num):
 
 
 
-num = 1000
+num = 10000
 
 for i in range((num  + 999) // 1000):
     for _ in trange(1000):
-        create_data(i + 2)
+        create_data(i + 73)
