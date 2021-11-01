@@ -18,9 +18,9 @@ import os
 
 inf = 10000000.0
 
-min_n_stones = 4 + 10
-max_n_stones = 4 + 20
-game_num = 65000 #117000
+min_n_stones = 4 + 15
+max_n_stones = 4 + 30
+game_num = 117000
 test_ratio = 0.1
 n_epochs = 200
 one_board_num = 1
@@ -81,9 +81,29 @@ center16_idx = [
 for pattern in deepcopy(center16_idx):
     center16_idx.append(list(reversed(pattern)))
 
+corner9_idx = [
+    [0, 1, 2, 8, 9, 10, 16, 17, 18], [0, 8, 16, 1, 9, 17, 2, 10, 18],
+    [7, 6, 5, 15, 14, 13, 23, 22, 21], [7, 15, 23, 6, 14, 22, 5, 13, 21],
+    [56, 57, 58, 48, 49, 50, 40, 41, 42], [56, 48, 40, 57, 49, 41, 58, 50, 42],
+    [63, 62, 61, 55, 54, 53, 47, 46, 45], [63, 55, 47, 62, 54, 46, 61, 53, 45]
+]
+
+edge_block = [
+    [0, 2, 3, 4, 5, 7, 10, 11, 12, 13], [7, 5, 4, 3, 2, 0, 13, 12, 11, 10],
+    [0, 16, 24, 32, 40, 56, 17, 25, 33, 41], [56, 40, 32, 24, 16, 0, 41, 33, 25, 17],
+    [56, 58, 59, 60, 61, 63, 50, 51, 52, 53], [63, 61, 60, 59, 58, 56, 53, 52, 51, 50],
+    [7, 23, 31, 39, 47, 63, 22, 30, 38, 46], [63, 47, 39, 31, 23, 7, 46, 38, 30, 22]
+]
+
+cross_idx = [
+    [0, 9, 18, 27, 1, 10, 19, 8, 17, 26], [0, 9, 18, 27, 8, 17, 26, 1, 10, 19],
+    [7, 14, 21, 28, 6, 13, 20, 15, 22, 29], [7, 14, 21, 28, 15, 22, 29, 6, 13, 20],
+    [56, 49, 42, 35, 57, 50, 43, 48, 41, 34], [56, 49, 42, 35, 48, 41, 34, 57, 50, 43],
+    [63, 54, 45, 36, 62, 53, 44, 55, 46, 37], [63, 54, 45, 36, 55, 46, 37, 62, 53, 44]
+]
 
 pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal5_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, corner25_idx]
-#pattern_idx = [edge_2x_idx, triangle_idx]
+#pattern_idx = [line2_idx, line3_idx, line4_idx, diagonal6_idx, diagonal7_idx, diagonal8_idx, edge_2x_idx, triangle_idx, edge_block, cross_idx]
 all_data = [[] for _ in range(len(pattern_idx))]
 all_labels = []
 
@@ -158,6 +178,7 @@ def LeakyReLU(x):
 y_all = None
 x = [None for _ in range(len(pattern_idx))]
 ys = []
+#names = ['line2', 'line3', 'line4', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle', 'edge_block', 'cross']
 names = ['line2', 'line3', 'line4', 'diagonal5', 'diagonal6', 'diagonal7', 'diagonal8', 'edge2X', 'triangle', 'corner25']
 #names = ['edge2x', 'triangle']
 for i in range(len(pattern_idx)):
@@ -167,6 +188,10 @@ for i in range(len(pattern_idx)):
     y = Dense(16)(y)
     y = LeakyReLU(alpha=0.01)(y)
     y = Dense(1, name=names[i] + '_out')(y)
+    #if i == 0:
+    #    y_all = y
+    #else:
+    #    y_all = Add()([y_all, y])
     ys.append(y)
 y_all = Add()(ys)
 model = Model(inputs=x, outputs=y_all)
