@@ -62,7 +62,7 @@ for i in trange(117):
             lose_data(record, 0)
             win_data(record, 1)
 
-for i in trange(1):
+for i in trange(3):
     with open('self_play/' + digit(i, 7) + '.txt', 'r') as f:
         records = f.read().splitlines()
     for datum in records:
@@ -84,24 +84,25 @@ book = {}
 
 max_ln = 50
 
-num_threshold = 2
+num_threshold1 = 2
+num_threshold2 = 8
 
 inf = 100000000
 
 def calc_value(r):
-    if record_all[r][0] < num_threshold:
+    if record_all[r][0] < num_threshold1:
         return -inf
-    if record_all[r][1] / record_all[r][0] < -0.1:
+    if record_all[r][0] < num_threshold2 and record_all[r][1] < 0:
         return -inf
     val = 0.1 * record_all[r][0] + record_all[r][1] / record_all[r][0]
     #print(r, record_all[r], val)
-    return val
+    return max(-0.1, val)
 
 def create_book(record):
     if len(record) > max_ln:
         return
     policy = -1
-    max_val = -inf
+    max_val = -0.1
     for i in range(hw2):
         r = record + all_chars[i]
         if r in record_all:
@@ -109,7 +110,7 @@ def create_book(record):
             if max_val < val:
                 max_val = val
                 policy = i
-    if max_val != -inf:
+    if max_val != -0.1:
         book[record] = all_chars[policy]
         for i in range(hw2):
             r = record + all_chars[policy] + all_chars[i]

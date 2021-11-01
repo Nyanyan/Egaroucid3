@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 150
+#define tl 2000
 
 #define hw 8
 #define hw_m1 7
@@ -276,7 +276,7 @@ inline void init_move(){
                 legal_arr[1][idx][place] = true;
             else
                 legal_arr[1][idx][place] = false;
-           if (legal_arr[0][idx][place])
+            if (legal_arr[0][idx][place])
                 ++canput_arr[0][idx];
             if (legal_arr[1][idx][place])
                 ++canput_arr[1][idx];
@@ -568,6 +568,7 @@ inline void init_evaluation(){
             pre_evaluation(phase_idx, pattern_idx, pattern_sizes[pattern_idx], dense0, bias0, dense1, bias1, dense2, bias2);
         }
     }
+    /*
     for (phase_idx = 0; phase_idx < n_phases; ++phase_idx){
         for (i = 0; i < n_all_input; ++i){
             for (j = 0; j < n_all_dense0; ++j){
@@ -586,6 +587,7 @@ inline void init_evaluation(){
         getline(ifs, line);
         all_bias1[phase_idx] = stof(line);
     }
+    */
 }
 
 inline void search_hash_table_init(const int table_idx){
@@ -813,6 +815,11 @@ inline double calc_pattern(const board *b){
 }
 
 inline double evaluate(const board *b){
+    double res = calc_pattern(b);
+    if (b->p)
+        res = -res;
+    return min(0.9999, max(-0.9999, res));
+    /*
     int phase_idx = calc_phase_idx(b);
     double in_arr[n_all_input];
     in_arr[0] = calc_pattern(b);
@@ -833,6 +840,7 @@ inline double evaluate(const board *b){
     if (b->p)
         res = -res;
     return min(0.9999, max(-0.9999, res));
+    */
 }
 
 double canput_exact_evaluate(board *b){
@@ -1288,6 +1296,8 @@ inline search_result search(const board b){
                 value = alpha;
                 res_depth = depth + 1;
                 cerr << "depth: " << res_depth << " time: " << tim() - strt << " policy: " << policy << " value: " << value<< " nodes: " << searched_nodes << " nps: " << (long long)searched_nodes * 1000 / max(1LL, tim() - strt) << endl;
+                if (depth == hw2_m1 - b.n)
+                    break;
                 ++depth;
             }
         }
@@ -1399,7 +1409,7 @@ int main(){
                 b = move(&b, policy);
                 ++n_stones;
                 result = search(b);
-                cout << coord_str(policy) << " " << calc_result_value(result.value) << endl;
+                cout << coord_str(policy) << " " << calc_result_value(-result.value) << endl;
                 continue;
             }
         }
