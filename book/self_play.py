@@ -1,8 +1,9 @@
 from tqdm import trange
+import subprocess
+from random import randrange
 
 hw = 8
 hw2 = 64
-board_index_num = 38
 dy = [0, 1, 0, -1, 1, 1, -1, -1]
 dx = [1, 0, -1, 0, 1, -1, 1, -1]
 
@@ -16,7 +17,6 @@ all_chars = [
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 
     '[', ']', '^', '_', '`', 'a', 'b', 'c', 
     'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~']
-
 
 def digit(n, r):
     n = str(n)
@@ -167,48 +167,48 @@ class reversi:
             #print('Draw!', self.nums[0], '-', self.nums[1])
             return -1
 
-def collect_data(num, s):
-    global dict_data
-    record = []
+def create_data(num):
+    ais = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(2)]
+    for i in range(2):
+        s_in = str(randrange(1, 2000000000)) + '\n' + str(i) + '\n'
+        ais[i].stdin.write(s_in.encode('utf-8'))
+        ais[i].stdin.flush()
     rv = reversi()
-    idx = 0
-    turn = 0
+    record = []
     while True:
-        if idx >= len(s):
-            return
         if rv.check_pass() and rv.check_pass():
             break
-        x = ord(s[idx]) - ord('a')
-        y = int(s[idx + 1]) - 1
+        s_in = ''
+        for y in range(hw):
+            for x in range(hw):
+                s_in += '0' if rv.grid[y][x] == 0 else '1' if rv.grid[y][x] == 1 else '.'
+            s_in += '\n'
+        ais[rv.player].stdin.write(s_in.encode('utf-8'))
+        ais[rv.player].stdin.flush()
+        y, x, _ = [i for i in ais[rv.player].stdout.readline().split()]
+        y = int(y)
+        x = int(x)
         record.append([rv.player, all_chars[y * hw + x]])
-        idx += 2
         if rv.move(y, x):
-            print('error')
-            exit()
-        if rv.end():
-            break
-    rv.check_pass()
-    #score = 1 if rv.nums[0] > rv.nums[1] else 0 if rv.nums[0] == rv.nums[1] else -1
+            print(rv.player)
+            print(y, x)
+            print(s_in)
+            for i in range(2):
+                ais[i].kill()
+            return
     result = rv.nums[0] - rv.nums[1]
     score = 1 if result > 0 else -1 if result < 0 else 0
-    with open('data/' + digit(num, 7) + '.txt', 'a') as f:
+    with open('self_play/' + digit(num, 7) + '.txt', 'a') as f:
         for player, policy in record:
             f.write(str(player) + policy)
         f.write(' ' + str(score) + '\n')
+    for i in range(2):
+        ais[i].kill()
 
 
-games = []
-for year in reversed(range(1990, 2019 + 1)):
-    raw_data = ''
-    with open('third_party/records/' + str(year) + '.csv', 'r', encoding='utf-8-sig') as f:
-        raw_data = f.read()
-    games.extend([i for i in raw_data.splitlines()])
-print(len(games))
-dict_data = {}
-idx = 0
-for i in trange(len(games)):
-    if len(games[i]) == 0:
-        continue
-    collect_data(idx // 1000, games[i])
-    idx += 1
-print(idx)
+
+num = 1000
+
+for i in range((num  + 999) // 1000):
+    for _ in trange(1000):
+        create_data(i)
