@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 10
+#define tl 50
 
 #define hw 8
 #define hw_m1 7
@@ -50,10 +50,10 @@ using namespace std;
 #define mpct 1.0
 #define mpcwindow 1e-10
 
-#define n_all_input 4
+#define n_all_input 14
 #define n_all_dense0 16
 
-#define win_read_depth 16
+#define win_read_depth 15
 
 int xorx=123456789, xory=362436069, xorz=521288629, xorw=88675123;
 double myrandom(){
@@ -470,13 +470,9 @@ inline void init_book(){
         coord = char_keys[param_compressed1[data_idx++]];
         y = coord / hw;
         x = coord % hw;
-        //cerr << y * hw + x << endl;
-        //print_board(fb.b);
         register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, y * hw + x);
         for (i = 0; i < 8; ++i)
             swap(fb.b[i], fb.b[8 + i]);
-        //cerr << x * hw + y << endl;
-        //print_board(fb.b);
         register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, x * hw + y);
         for (i = 0; i < 16; ++i)
             tmp[i] = fb.b[i];
@@ -484,13 +480,9 @@ inline void init_book(){
             fb.b[i] = reverse_board[tmp[7 - i]];
         for (i = 0; i < 8; ++i)
             fb.b[8 + i] = reverse_board[tmp[15 - i]];
-        //cerr << (hw_m1 - x) * hw + (hw_m1 - y) << endl;
-        //print_board(fb.b);
         register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, (hw_m1 - x) * hw + (hw_m1 - y));
         for (i = 0; i < 8; ++i)
             swap(fb.b[i], fb.b[8 + i]);
-        //cerr << (hw_m1 - y) * hw + (hw_m1 - x) << endl;
-        //print_board(fb.b);
         register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, (hw_m1 - y) * hw + (hw_m1 - x));
         n_book += 4;
     }
@@ -589,7 +581,6 @@ inline void init_evaluation(){
             pre_evaluation(phase_idx, pattern_idx, pattern_sizes[pattern_idx], dense0, bias0, dense1, bias1, dense2, bias2);
         }
     }
-    /*
     for (phase_idx = 0; phase_idx < n_phases; ++phase_idx){
         for (i = 0; i < n_all_input; ++i){
             for (j = 0; j < n_all_dense0; ++j){
@@ -608,7 +599,6 @@ inline void init_evaluation(){
         getline(ifs, line);
         all_bias1[phase_idx] = stof(line);
     }
-    */
 }
 
 inline void search_hash_table_init(const int table_idx){
@@ -708,10 +698,10 @@ inline int calc_phase_idx(const board *b){
     return 3;
 }
 
-inline double calc_pattern(const board *b){
+inline void calc_pattern(const board *b, double arr[]){
     int idx, phase_idx;
     phase_idx = calc_phase_idx(b);
-    double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, edge_block = 0.0, cross = 0.0; //corner25 = 0.0;
+    double line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, edge_block = 0.0, cross = 0.0; //corner25 = 0.0;
 
     line2 += ev_arr[phase_idx][0][b->b[1]];
     line2 += ev_arr[phase_idx][0][b->b[6]];
@@ -840,48 +830,26 @@ inline double calc_pattern(const board *b){
     idx = reverse_board[b->b[32]] / pow3[4] * pow3[6] + pop_mid[reverse_board[b->b[33]]][7][4] * pow3[3] + pop_mid[reverse_board[b->b[31]]][7][4];
     cross += ev_arr[phase_idx][10][idx];
 
-    /*
-    idx = b->b[0] / pow3[3] * pow3[5] + b->b[1] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[0]] / pow3[3] * pow3[5] + reverse_board[b->b[1]] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = b->b[7] / pow3[3] * pow3[5] + b->b[6] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[7]] / pow3[3] * pow3[5] + reverse_board[b->b[6]] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = b->b[8] / pow3[3] * pow3[5] + b->b[9] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[8]] / pow3[3] * pow3[5] + reverse_board[b->b[9]] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = b->b[15] / pow3[3] * pow3[5] + b->b[14] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[15]] / pow3[3] * pow3[5] + reverse_board[b->b[14]] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    */
-    //cerr << line2 / 8.0 << " " << line3 / 8.0 << " " << line4 / 8.0 << " " << diagonal5 / 8.0 << " " << diagonal6 / 8.0 << " " << diagonal7 / 8.0 << " " << diagonal8 / 4.0 << " " << edge_2x / 8.0 << " " << triangle / 8.0 << " " << edge_block / 8.0 << " " << cross / 8.0 << endl;
-    //res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + corner25 / 8.0;
-    res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + edge_block / 8.0 + cross / 8.0;
-    //res = line2 + line3 + line4 + diagonal5 + diagonal6 + diagonal7 + diagonal8 + edge_2x + triangle + corner25;
-    //if (b->p == 1)
-    //    res = -res;
-    //res += canput_evaluate(b) * canput_weight[turn];
-    //return min(0.9999, max(-0.9999, res));
-    return res;
+    arr[0] = line2 / 8.0;
+    arr[1] = line3 / 8.0;
+    arr[2] = line4 / 8.0;
+    arr[3] = diagonal5 / 8.0;
+    arr[4] = diagonal6 / 8.0;
+    arr[5] = diagonal7 / 8.0;
+    arr[6] = diagonal8 / 4.0;
+    arr[7] = edge_2x / 8.0;
+    arr[8] = triangle / 8.0;
+    arr[9] = edge_block / 8.0;
+    arr[10] = cross / 8.0;
 }
 
 inline double evaluate(const board *b){
-    double res = calc_pattern(b);
-    //res += myrandom() * 0.02 - 0.01;
-    if (b->p)
-        res = -res;
-    return min(0.9999, max(-0.9999, res));
-    /*
     int phase_idx = calc_phase_idx(b);
     double in_arr[n_all_input];
-    in_arr[0] = calc_pattern(b);
-    in_arr[1] = (double)calc_canput(b) / 30.0;
-    in_arr[2] = (double)calc_surround0(b) / 30.0;
-    in_arr[3] = (double)calc_surround1(b) / 30.0;
+    calc_pattern(b, in_arr);
+    in_arr[11] = (double)calc_canput(b) / 30.0;
+    in_arr[12] = (double)calc_surround0(b) / 30.0;
+    in_arr[13] = (double)calc_surround1(b) / 30.0;
     double hidden[n_all_dense0];
     int i, j;
     for (i = 0; i < n_all_dense0; ++i){
@@ -896,7 +864,6 @@ inline double evaluate(const board *b){
     if (b->p)
         res = -res;
     return min(0.9999, max(-0.9999, res));
-    */
 }
 
 double canput_exact_evaluate(board *b){
@@ -1420,44 +1387,40 @@ double calc_result_value(double v){
     */
 }
 
-inline int random_move(board b){
+int random_move(board b){
     vector<int> moves;
-    vector<double> values;
+    vector<double> vals;
+    board nb;
+    double v, v_sum = 0.0;
     for (const int &cell: vacant_lst){
         for (const int &idx: place_included[cell]){
             if (move_arr[b.p][b.b[idx]][local_place[idx][cell]][0] || move_arr[b.p][b.b[idx]][local_place[idx][cell]][1]){
                 moves.push_back(cell);
-                board nb = move(&b, cell);
-                values.push_back(2.0 + evaluate(&nb));
+                nb = move(&b, cell);
+                v = evaluate(&nb) + 2.0;
+                v_sum += v;
+                vals.push_back(v);
                 break;
             }
         }
     }
-    double v_sum = 0.0;
-    for (int i = 0; i < (int)values.size(); ++i)
-        v_sum += values[i];
-    for (int i = 0; i < (int)values.size(); ++i)
-        values[i] /= v_sum;
+    for (int i = 0; i < (int)vals.size(); ++i)
+        vals[i] /= v_sum;
     double rnd = myrandom();
-    double s = 0.0;
-    for (int i = 0; i < (int)moves.size(); ++i){
-        s += values[i];
-        if (rnd <= s)
+    v_sum = 0.0;
+    for (int i = 0; i < (int)vals.size(); ++i){
+        v_sum += vals[i];
+        if (rnd <= v_sum)
             return moves[i];
     }
     return -1;
 }
 
 int main(){
-    int ai_player, policy, n_stones;
+    int ai_player, n_stones;
     board b;
-    int num;
-    cin >> num;
-    for (int i = 0; i < num; ++i)
-        myrandom();
     cin >> ai_player;
     long long strt = tim();
-    search_result result;
     cerr << "initializing" << endl;
     init_pow();
     init_mod3();
@@ -1475,24 +1438,12 @@ int main(){
         n_stones = input_board(b.b);
         b.n = n_stones;
         b.p = ai_player;
-        if (n_stones <= 5){
-            if (ai_player == 0){
-                policy = 37;
-                cout << coord_str(policy) << " " << calc_result_value(0.0) << endl;
-            } else{
-                policy = 45;
-                cout << coord_str(policy) << " " << calc_result_value(0.0) << endl;
-            }
-        } else{
-            if (n_stones >= 4 + 7){
-                result = search(b);
-                cerr << "policy " << result.policy << endl;
-                cout << coord_str(result.policy) << " " << calc_result_value(result.value) << endl;
-            } else{
-                policy = random_move(b);
-                cout << coord_str(policy) << " 0" << endl;
-            }
-        }
+        if (ai_player == 0 && n_stones == 4)
+            cout << coord_str(37) << endl;
+        else if (n_stones < 4 + 6)
+            cout << coord_str(random_move(b)) << endl;
+        else
+            cout << coord_str(search(b).policy) << endl;
     }
     return 0;
 }
