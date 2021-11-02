@@ -91,7 +91,7 @@ print(len(record_all))
 black_win = 0
 white_win = 0
 
-for i in trange(100):
+for i in trange(0):
     try:
         with open('self_play/' + digit(i, 7) + '.txt', 'r') as f:
             records = f.read().splitlines()
@@ -147,8 +147,8 @@ def create_book(record):
         r = record + all_chars[i]
         if r in record_all:
             val = calc_value(r)
-            #if translate(record) in {'F5F6E6F4G5', 'F5F6E6D6E7', 'F5F6'}:
-            #    print(translate(r), val)
+            if translate(record) in {'F5F6E6D6C5E3'}:
+                print(translate(r), val)
             if max_val < val:
                 max_val = val
                 policy = i

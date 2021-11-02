@@ -863,7 +863,7 @@ inline double evaluate(const board *b){
         res += hidden[i] * all_dense1[phase_idx][i];
     if (b->p)
         res = -res;
-    res += myrandom() * 0.02 - 0.01;
+    res += myrandom() * 0.04 - 0.02;
     return min(0.9999, max(-0.9999, res));
 }
 
@@ -1445,7 +1445,7 @@ int main(){
         b.p = ai_player;
         if (ai_player == 0 && n_stones == 4)
             cout << coord_str(37) << endl;
-        else if (n_stones < 4 + 6)
+        else if (n_stones < 4 + 10)
             cout << coord_str(random_move(b)) << endl;
         else
             cout << coord_str(search(b).policy) << endl;

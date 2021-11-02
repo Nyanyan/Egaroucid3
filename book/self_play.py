@@ -170,7 +170,7 @@ class reversi:
 ais = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(2)]
 
 for i in range(2):
-    s_in = str(randrange(1, 20000)) + '\n' + str(i) + '\n'
+    s_in = str(randrange(1, 100000)) + '\n' + str(i) + '\n'
     ais[i].stdin.write(s_in.encode('utf-8'))
     ais[i].stdin.flush()
 
@@ -214,11 +214,11 @@ def create_data(num):
 
 
 
-num = 5000
+num = 1000
 
 for i in range((num  + 999) // 1000):
     for _ in trange(1000):
-        create_data(i + 25)
+        create_data(i + 29)
 
 for i in range(2):
     ais[i].kill()

@@ -53,7 +53,7 @@ using namespace std;
 #define n_all_input 14
 #define n_all_dense0 16
 
-#define win_read_depth 21
+#define win_read_depth 20
 
 struct board{
     int b[b_idx_num];
@@ -1427,15 +1427,6 @@ int main(){
     f_search_table_idx = 0;
     search_hash_table_init(f_search_table_idx);
     cerr << "iniitialized in " << tim() - strt << " ms" << endl;
-    if (ai_player == 0){
-        string raw_board;
-        for (int i = 0; i < hw; ++i){
-            cin >> raw_board; cin.ignore();
-        }
-        policy = 37;
-        cerr << "book policy " << policy << endl;
-        cout << coord_str(policy) << " " << calc_result_value(0.0) << endl;
-    }
     while (true){
         n_stones = input_board(b.b);
         cerr << evaluate(&b) << endl;
@@ -1443,6 +1434,12 @@ int main(){
         cerr << n_stones - 4 << "moves" << endl;
         b.n = n_stones;
         b.p = ai_player;
+        if (ai_player == 0 && n_stones == 4){
+            policy = 37;
+            cerr << "book policy " << policy << endl;
+            cout << coord_str(policy) << " " << calc_result_value(0.0) << endl;
+            continue;
+        }
         if (n_stones < book_stones){
             policy = get_book(b.b);
             cerr << "book policy " << policy << endl;
