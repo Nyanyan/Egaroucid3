@@ -460,13 +460,9 @@ inline void init_book(){
         coord = char_keys[param_compressed1[data_idx++]];
         y = coord / hw;
         x = coord % hw;
-        //cerr << y * hw + x << endl;
-        //print_board(fb.b);
         register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, y * hw + x);
         for (i = 0; i < 8; ++i)
             swap(fb.b[i], fb.b[8 + i]);
-        //cerr << x * hw + y << endl;
-        //print_board(fb.b);
         register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, x * hw + y);
         for (i = 0; i < 16; ++i)
             tmp[i] = fb.b[i];
@@ -474,13 +470,9 @@ inline void init_book(){
             fb.b[i] = reverse_board[tmp[7 - i]];
         for (i = 0; i < 8; ++i)
             fb.b[8 + i] = reverse_board[tmp[15 - i]];
-        //cerr << (hw_m1 - x) * hw + (hw_m1 - y) << endl;
-        //print_board(fb.b);
         register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, (hw_m1 - x) * hw + (hw_m1 - y));
         for (i = 0; i < 8; ++i)
             swap(fb.b[i], fb.b[8 + i]);
-        //cerr << (hw_m1 - y) * hw + (hw_m1 - x) << endl;
-        //print_board(fb.b);
         register_book(book, fb.b, calc_hash(fb.b) & book_hash_mask, (hw_m1 - y) * hw + (hw_m1 - x));
         n_book += 4;
     }
