@@ -14,6 +14,7 @@ book/third_party
 book/ai.out
 book/data
 book/self_play
+book/book_record2.py
 evaluation/learned_data
 evaluation/third_party
 evaluation/data

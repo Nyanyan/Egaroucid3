@@ -88,7 +88,7 @@ print(len(record_all))
 black_win = 0
 white_win = 0
 
-for i in trange(200):
+for i in trange(0):
     try:
         with open('self_play/' + digit(i, 7) + '.txt', 'r') as f:
             records = f.read().splitlines()
@@ -127,10 +127,11 @@ def calc_value(r):
         return -inf
     #if record_all[r][0] < num_threshold2 and record_all[r][1] < 0:
     #    return -inf
-    if translate(r) == 'F5D6':
-        return inf
+    #if translate(r) == 'F5D6':
+    #    return inf
     val = record_all[r][1] / record_all[r][0]
-    val += 0.01 * (1.0 - 2 ** (-0.1 * record_all[r][0]))
+    val += 0.001 * record_all[r][0]
+    #val += 0.1 * (1.0 - 2 ** (-0.1 * record_all[r][0]))
     #print(r, record_all[r], val)
     return val
 
@@ -161,8 +162,8 @@ book = {}
 create_book(all_chars[37])
 print(len(book))
 create_book(all_chars[37] + all_chars[43])
-create_book(all_chars[37] + all_chars[45])
-create_book(all_chars[37] + all_chars[29])
+#create_book(all_chars[37] + all_chars[45])
+#create_book(all_chars[37] + all_chars[29])
 print(len(book))
 if (input('sure?: ') == 'yes'):
     with open('learned_data/book.txt', 'w') as f:
