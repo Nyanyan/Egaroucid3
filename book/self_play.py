@@ -190,16 +190,15 @@ def create_data(num):
         ais[rv.player].stdin.flush()
         #print(s_in)
         try:
-            y, x, _ = [i for i in ais[rv.player].stdout.readline().split()]
+            y, x = [int(i) for i in ais[rv.player].stdout.readline().split()]
         except:
+            print('crash')
             ais = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(2)]
             for i in range(2):
                 s_in = str(randrange(1, 20000)) + '\n' + str(i) + '\n'
                 ais[i].stdin.write(s_in.encode('utf-8'))
                 ais[i].stdin.flush()
             return
-        y = int(y)
-        x = int(x)
         record.append([rv.player, all_chars[y * hw + x]])
         if rv.move(y, x):
             print(rv.player)
@@ -219,7 +218,7 @@ num = 5000
 
 for i in range((num  + 999) // 1000):
     for _ in trange(1000):
-        create_data(i + 15)
+        create_data(i + 25)
 
 for i in range(2):
     ais[i].kill()

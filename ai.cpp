@@ -61,6 +61,7 @@ struct board{
     int policy;
     double v;
     int n;
+    int op;
 };
 
 struct book_node{
@@ -114,6 +115,7 @@ int pop_mid[n_line][hw][hw];
 int reverse_board[n_line];
 int canput_arr[2][n_line];
 int surround_arr[2][n_line];
+int open_arr[n_line][hw];
 
 vector<int> vacant_lst;
 book_node *book[book_hash_table_size];
@@ -296,6 +298,17 @@ inline void init_move(){
                 put_arr[1][idx][place] -= pow3[hw_m1 - place];
             }
         }
+        for (place = 0; place < hw; ++place){
+            open_arr[idx][hw_m1 - place] = 0;
+            if (place - 1 >= 0){
+                if ((1 & (b >> (place - 1))) == 0 && (1 & (w >> (place - 1))) == 0)
+                    ++open_arr[idx][hw_m1 - place];
+            }
+            if (place + 1 < hw){
+                if ((1 & (b >> (place + 1))) == 0 && (1 & (w >> (place + 1))) == 0)
+                    ++open_arr[idx][hw_m1 - place];
+            }
+        }
     }
 }
 
@@ -354,6 +367,7 @@ inline void init_pop_mid(){
 
 inline board move(const board *b, const int global_place){
     board res;
+    res.op = 0;
     int j, place, g_place;
     for (int i = 0; i < b_idx_num; ++i)
         res.b[i] = b->b[i];
@@ -361,17 +375,23 @@ inline board move(const board *b, const int global_place){
         place = local_place[i][global_place];
         for (j = 1; j <= move_arr[b->p][b->b[i]][place][0]; ++j){
             g_place = global_place - move_offset[i] * j;
-            for (const int &idx: place_included[g_place])
+            for (const int &idx: place_included[g_place]){
                 res.b[idx] = flip_arr[b->p][res.b[idx]][local_place[idx][g_place]];
+                res.op += open_arr[res.b[idx]][local_place[idx][g_place]];
+            }
         }
         for (j = 1; j <= move_arr[b->p][b->b[i]][place][1]; ++j){
             g_place = global_place + move_offset[i] * j;
-            for (const int &idx: place_included[g_place])
+            for (const int &idx: place_included[g_place]){
                 res.b[idx] = flip_arr[b->p][res.b[idx]][local_place[idx][g_place]];
+                res.op += open_arr[res.b[idx]][local_place[idx][g_place]];
+            }
         }
     }
-    for (const int &idx: place_included[global_place])
+    for (const int &idx: place_included[global_place]){
         res.b[idx] = put_arr[b->p][res.b[idx]][local_place[idx][global_place]];
+        res.op += open_arr[res.b[idx]][local_place[idx][global_place]];
+    }
     res.p = 1 - b->p;
     res.n = b->n + 1;
     res.policy = global_place;
@@ -1085,6 +1105,7 @@ double nega_alpha_ordering(const board *b, const long long strt, int skip_cnt, i
                         nb[canput].v = -evaluate(&nb[canput]) - 1000.0;
                     else if (b->p == 1)
                         nb[canput].v = -nb[canput].v;
+                    nb[canput].v -= 0.02 * (double)nb[canput].op;
                     ++canput;
                     break;
                 }
@@ -1161,6 +1182,7 @@ double nega_scout(const board *b, const long long strt, int skip_cnt, int depth,
                         nb[canput].v = -evaluate(&nb[canput]) - 1000.0;
                     else if (b->p == 1)
                         nb[canput].v = -nb[canput].v;
+                    nb[canput].v -= 0.02 * (double)nb[canput].op;
                     ++canput;
                     break;
                 }
@@ -1224,11 +1246,13 @@ inline search_result search(const board b){
     for (const int &cell: vacant_lst){
         for (const int &idx: place_included[cell]){
             if (move_arr[b.p][b.b[idx]][local_place[idx][cell]][0] || move_arr[b.p][b.b[idx]][local_place[idx][cell]][1]){
+                cerr << cell << " ";
                 nb.push_back(move(&b, cell));
                 break;
             }
         }
     }
+    cerr << endl;
     int canput = nb.size();
     cerr << "canput: " << canput << endl;
     int depth = 4;
@@ -1249,7 +1273,7 @@ inline search_result search(const board b){
             sort(nb.begin(), nb.end(), move_ordering);
         for (i = 0; i < canput; ++i){
             g = -nega_alpha_ordering_final(&nb[i], strt, 0, depth, -beta, -alpha);
-            if (alpha < g){
+            if (alpha < g || i == 0){
                 alpha = g;
                 tmp_policy = nb[i].policy;
             }
@@ -1277,6 +1301,7 @@ inline search_result search(const board b){
                     nb[i].v = -evaluate(&nb[i]) - 1000.0;
                 else if (b.p == 1)
                     nb[i].v = -nb[i].v;
+                nb[i].v -= 0.02 * (double)nb[i].op;
             }
             if (canput > 1)
                 sort(nb.begin(), nb.end(), move_ordering);

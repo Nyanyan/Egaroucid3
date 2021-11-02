@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 50
+#define tl 30
 
 #define hw 8
 #define hw_m1 7
@@ -863,6 +863,7 @@ inline double evaluate(const board *b){
         res += hidden[i] * all_dense1[phase_idx][i];
     if (b->p)
         res = -res;
+    res += myrandom() * 0.02 - 0.01;
     return min(0.9999, max(-0.9999, res));
 }
 
@@ -1253,7 +1254,7 @@ inline search_result search(const board b){
             sort(nb.begin(), nb.end(), move_ordering);
         for (i = 0; i < canput; ++i){
             g = -nega_alpha_ordering_final(&nb[i], strt, 0, depth, -beta, -alpha);
-            if (alpha < g){
+            if (alpha < g || i == 0){
                 alpha = g;
                 tmp_policy = nb[i].policy;
             }
@@ -1417,6 +1418,10 @@ int random_move(board b){
 }
 
 int main(){
+    int num;
+    cin >> num;
+    for (int i = 0; i < num; ++i)
+        myrandom();
     int ai_player, n_stones;
     board b;
     cin >> ai_player;
