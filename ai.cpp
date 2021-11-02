@@ -45,9 +45,9 @@ using namespace std;
 #define n_dense0 16
 #define n_dense1 16
 
-#define mpca 1.113598630521083
-#define mpcsd 0.27059419121478845
-#define mpct 1.0
+#define mpca 1.089838739292347
+#define mpcsd 0.23107466045337674
+#define mpct 2.05
 #define mpcwindow 1e-10
 
 #define n_all_input 14
