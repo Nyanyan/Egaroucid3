@@ -1465,6 +1465,7 @@ int main(){
     init_local_place();
     init_included();
     init_pop_digit();
+    init_pop_mid();
     //init_book();
     init_evaluation();
     f_search_table_idx = 0;

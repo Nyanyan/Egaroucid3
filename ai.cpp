@@ -50,7 +50,7 @@ using namespace std;
 #define mpct 1.0
 #define mpcwindow 1e-10
 
-#define n_all_input 4
+#define n_all_input 14
 #define n_all_dense0 16
 
 #define win_read_depth 21
@@ -579,7 +579,6 @@ inline void init_evaluation(){
             pre_evaluation(phase_idx, pattern_idx, pattern_sizes[pattern_idx], dense0, bias0, dense1, bias1, dense2, bias2);
         }
     }
-    /*
     for (phase_idx = 0; phase_idx < n_phases; ++phase_idx){
         for (i = 0; i < n_all_input; ++i){
             for (j = 0; j < n_all_dense0; ++j){
@@ -598,7 +597,6 @@ inline void init_evaluation(){
         getline(ifs, line);
         all_bias1[phase_idx] = stof(line);
     }
-    */
 }
 
 inline void search_hash_table_init(const int table_idx){
@@ -698,10 +696,10 @@ inline int calc_phase_idx(const board *b){
     return 3;
 }
 
-inline double calc_pattern(const board *b){
+inline void calc_pattern(const board *b, double arr[]){
     int idx, phase_idx;
     phase_idx = calc_phase_idx(b);
-    double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, edge_block = 0.0, cross = 0.0; //corner25 = 0.0;
+    double line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, edge_block = 0.0, cross = 0.0; //corner25 = 0.0;
 
     line2 += ev_arr[phase_idx][0][b->b[1]];
     line2 += ev_arr[phase_idx][0][b->b[6]];
@@ -850,27 +848,33 @@ inline double calc_pattern(const board *b){
     */
     //cerr << line2 / 8.0 << " " << line3 / 8.0 << " " << line4 / 8.0 << " " << diagonal5 / 8.0 << " " << diagonal6 / 8.0 << " " << diagonal7 / 8.0 << " " << diagonal8 / 4.0 << " " << edge_2x / 8.0 << " " << triangle / 8.0 << " " << edge_block / 8.0 << " " << cross / 8.0 << endl;
     //res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + corner25 / 8.0;
-    res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + edge_block / 8.0 + cross / 8.0;
+    //res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + edge_block / 8.0 + cross / 8.0;
     //res = line2 + line3 + line4 + diagonal5 + diagonal6 + diagonal7 + diagonal8 + edge_2x + triangle + corner25;
     //if (b->p == 1)
     //    res = -res;
     //res += canput_evaluate(b) * canput_weight[turn];
     //return min(0.9999, max(-0.9999, res));
-    return res;
+    //return res;
+    arr[0] = line2 / 8.0;
+    arr[1] = line3 / 8.0;
+    arr[2] = line4 / 8.0;
+    arr[3] = diagonal5 / 8.0;
+    arr[4] = diagonal6 / 8.0;
+    arr[5] = diagonal7 / 8.0;
+    arr[6] = diagonal8 / 4.0;
+    arr[7] = edge_2x / 8.0;
+    arr[8] = triangle / 8.0;
+    arr[9] = edge_block / 8.0;
+    arr[10] = cross / 8.0;
 }
 
 inline double evaluate(const board *b){
-    double res = calc_pattern(b);
-    if (b->p)
-        res = -res;
-    return min(0.9999, max(-0.9999, res));
-    /*
     int phase_idx = calc_phase_idx(b);
     double in_arr[n_all_input];
-    in_arr[0] = calc_pattern(b);
-    in_arr[1] = (double)calc_canput(b) / 30.0;
-    in_arr[2] = (double)calc_surround0(b) / 30.0;
-    in_arr[3] = (double)calc_surround1(b) / 30.0;
+    calc_pattern(b, in_arr);
+    in_arr[11] = (double)calc_canput(b) / 30.0;
+    in_arr[12] = (double)calc_surround0(b) / 30.0;
+    in_arr[13] = (double)calc_surround1(b) / 30.0;
     double hidden[n_all_dense0];
     int i, j;
     for (i = 0; i < n_all_dense0; ++i){
@@ -885,7 +889,6 @@ inline double evaluate(const board *b){
     if (b->p)
         res = -res;
     return min(0.9999, max(-0.9999, res));
-    */
 }
 
 double canput_exact_evaluate(board *b){

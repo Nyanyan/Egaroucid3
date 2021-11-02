@@ -198,7 +198,7 @@ def collect_data(num, s):
 
 
 games = []
-for year in reversed(range(1990, 2019 + 1)):
+for year in reversed(range(1977, 1989 + 1)):
     raw_data = ''
     with open('third_party/records/' + str(year) + '.csv', 'r', encoding='utf-8-sig') as f:
         raw_data = f.read()
@@ -209,6 +209,6 @@ idx = 0
 for i in trange(len(games)):
     if len(games[i]) == 0:
         continue
-    collect_data(idx // 1000, games[i])
+    collect_data(idx // 1000 + 118, games[i])
     idx += 1
 print(idx)

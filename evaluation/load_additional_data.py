@@ -42,12 +42,14 @@ def collect_data(num):
             #print(board_proc)
             evaluate.stdin.write(board_proc.encode('utf-8'))
             evaluate.stdin.flush()
-            val, canput, sur0, sur1, al_st, ds_st = evaluate.stdout.readline().decode().strip().split()
+            vals = list(evaluate.stdout.readline().decode().strip().split())
             #print(score)
-            new_data.append([board, result, val, canput, sur0, sur1, al_st, ds_st])
+            tmp = [board, result]
+            tmp.extend(vals)
+            new_data.append(tmp)
     return new_data
 
-for i in range(30):
+for i in range(127):
     data = collect_data(i)
     with open('data_additional/' + digit(i, 7) + '.txt', 'w') as f:
         for datum in data:

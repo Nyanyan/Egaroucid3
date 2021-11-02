@@ -24,36 +24,13 @@ inf = 10000000.0
 
 min_n_stones = 4 + 50
 max_n_stones = 4 + 60
-game_num = 22000
+game_num = 126000
 test_ratio = 0.1
 n_epochs = 200
-n_input = 3
+n_input = 14
 
 all_data = []
 all_labels = []
-
-def calc_idx(board, patterns):
-    res = []
-    for pattern in patterns:
-        tmp = 0
-        for elem in pattern:
-            tmp *= 3
-            tmp += 0 if board[elem] == '0' else 1 if board[elem] == '1' else 2
-        res.append(tmp)
-    return res
-
-def make_lines(board, patterns):
-    res = []
-    for _ in range(one_board_num):
-        pattern = patterns[randrange(0, 8)]
-        #for pattern in patterns:
-        tmp = []
-        for elem in pattern:
-            tmp.append(1.0 if board[elem] == '0' else 0.0)
-        for elem in pattern:
-            tmp.append(1.0 if board[elem] == '1' else 0.0)
-        res.append(tmp)
-    return res
 
 def digit(n, r):
     n = str(n)
@@ -77,21 +54,21 @@ def collect_data(num):
         print('cannot open')
         return
     for datum in data:
-        board, result, v1, v2, v3, v4, v5, v6 = datum.split()
+        datum_split = datum.split()
+        board = datum_split[0]
+        result = datum_split[1]
         if min_n_stones <= calc_n_stones(board) < max_n_stones:
-            v1 = float(v1)
-            v2 = float(v2) / 30
-            v3 = float(v3) / 30
-            v4 = float(v4) / 30
-            v5 = float(v5) / 30
-            v6 = float(v6) / 30
+            vals = [float(i) for i in datum_split[2:]]
+            for i in range(11, len(vals)):
+                vals[i] /= 30
+            #n_vals = [sum(vals[:11]), vals[11], vals[12], vals[13]]
             result = float(result)
-            all_data.append([v1, v3, v4])
+            all_data.append(vals)
             all_labels.append(result)
 
 
 x = Input(shape=(n_input))
-y = Dense(8)(x)
+y = Dense(16)(x)
 y = LeakyReLU(y)
 y = Dense(1)(y)
 

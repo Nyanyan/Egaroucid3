@@ -67,21 +67,24 @@ def draw_data(record, player):
             else:
                 record_all[raw_record][0] += 1
 
-for i in trange(117):
-    with open('data/' + digit(i, 7) + '.txt', 'r') as f:
-        records = f.read().splitlines()
-    for datum in records:
-        record, score = datum.split()
-        score = int(score)
-        if score == 0:
-            draw_data(record, 0)
-            draw_data(record, 1)
-        elif score == 1:
-            win_data(record, 0)
-            lose_data(record, 1)
-        else:
-            lose_data(record, 0)
-            win_data(record, 1)
+for i in trange(127):
+    try:
+        with open('data/' + digit(i, 7) + '.txt', 'r') as f:
+            records = f.read().splitlines()
+        for datum in records:
+            record, score = datum.split()
+            score = int(score)
+            if score == 0:
+                draw_data(record, 0)
+                draw_data(record, 1)
+            elif score == 1:
+                win_data(record, 0)
+                lose_data(record, 1)
+            else:
+                lose_data(record, 0)
+                win_data(record, 1)
+    except:
+        continue
 
 print(len(record_all))
 
@@ -144,8 +147,8 @@ def create_book(record):
         r = record + all_chars[i]
         if r in record_all:
             val = calc_value(r)
-            if translate(record) in {'F5F6E6F4G5', 'F5F6E6D6E7', 'F5F6'}:
-                print(translate(r), val)
+            #if translate(record) in {'F5F6E6F4G5', 'F5F6E6D6E7', 'F5F6'}:
+            #    print(translate(r), val)
             if max_val < val:
                 max_val = val
                 policy = i
@@ -162,8 +165,8 @@ book = {}
 create_book(all_chars[37])
 print(len(book))
 create_book(all_chars[37] + all_chars[43])
-#create_book(all_chars[37] + all_chars[45])
-#create_book(all_chars[37] + all_chars[29])
+create_book(all_chars[37] + all_chars[45])
+create_book(all_chars[37] + all_chars[29])
 print(len(book))
 if (input('sure?: ') == 'yes'):
     with open('learned_data/book.txt', 'w') as f:

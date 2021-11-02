@@ -112,7 +112,7 @@ def make_lines(board, patterns):
     return res
 
 
-model = load_model('learned_data/40_50.h5')
+model = load_model('learned_data/30_40.h5')
 hidden = Model(inputs=model.input, outputs=model.get_layer('edge2X_out').output)
 
 board = '1..11110.1111110110011101101110011111100...11110....1..0........'
@@ -134,6 +134,8 @@ in_arr = [
 ]
 in_arr = [np.array([i]) for i in in_arr]
 '''
+#in_arr = np.array([[0.0563388, 0.0250241, 0.0800341, -0.0119438, -0.0628212, 0.019169, 0.0498845, 0.00358776, 0.014272, 0.0254815, -0.0824866, 20 / 30, 27 / 30, 34 / 30]])
+
 prediction = model.predict(in_arr)
 print(prediction)
 print(sum(i[0] for i in prediction) / 8.0)
