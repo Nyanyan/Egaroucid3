@@ -25,7 +25,7 @@ def translate(raw_record):
         record += char_translate[raw_record_split[i + 1]]
     print(record)
 
-with open('self_play/0000003.txt', 'r') as f:
+with open('self_play/0000113.txt', 'r') as f:
     for _ in range(10):
         raw_record = f.readline()
         translate(raw_record)

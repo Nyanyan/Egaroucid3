@@ -167,12 +167,15 @@ class reversi:
             #print('Draw!', self.nums[0], '-', self.nums[1])
             return -1
 
+ais = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(2)]
+
+for i in range(2):
+    s_in = str(randrange(1, 20000)) + '\n' + str(i) + '\n'
+    ais[i].stdin.write(s_in.encode('utf-8'))
+    ais[i].stdin.flush()
+
 def create_data(num):
-    ais = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(2)]
-    for i in range(2):
-        s_in = str(randrange(1, 2000000000)) + '\n' + str(i) + '\n'
-        ais[i].stdin.write(s_in.encode('utf-8'))
-        ais[i].stdin.flush()
+    global ais
     rv = reversi()
     record = []
     while True:
@@ -186,7 +189,15 @@ def create_data(num):
         ais[rv.player].stdin.write(s_in.encode('utf-8'))
         ais[rv.player].stdin.flush()
         #print(s_in)
-        y, x, _ = [i for i in ais[rv.player].stdout.readline().split()]
+        try:
+            y, x, _ = [i for i in ais[rv.player].stdout.readline().split()]
+        except:
+            ais = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(2)]
+            for i in range(2):
+                s_in = str(randrange(1, 20000)) + '\n' + str(i) + '\n'
+                ais[i].stdin.write(s_in.encode('utf-8'))
+                ais[i].stdin.flush()
+            return
         y = int(y)
         x = int(x)
         record.append([rv.player, all_chars[y * hw + x]])
@@ -194,8 +205,6 @@ def create_data(num):
             print(rv.player)
             print(y, x)
             print(s_in)
-            for i in range(2):
-                ais[i].kill()
             return
     result = rv.nums[0] - rv.nums[1]
     score = 1 if result > 0 else -1 if result < 0 else 0
@@ -203,13 +212,14 @@ def create_data(num):
         for player, policy in record:
             f.write(str(player) + policy)
         f.write(' ' + str(score) + '\n')
-    for i in range(2):
-        ais[i].kill()
 
 
 
-num = 10000
+num = 5000
 
 for i in range((num  + 999) // 1000):
     for _ in trange(1000):
-        create_data(i + 73)
+        create_data(i + 15)
+
+for i in range(2):
+    ais[i].kill()

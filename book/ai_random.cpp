@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 50
+#define tl 10
 
 #define hw 8
 #define hw_m1 7
@@ -871,7 +871,7 @@ inline double calc_pattern(const board *b){
 
 inline double evaluate(const board *b){
     double res = calc_pattern(b);
-    res += myrandom() * 0.2 - 0.1;
+    //res += myrandom() * 0.02 - 0.01;
     if (b->p)
         res = -res;
     return min(0.9999, max(-0.9999, res));
@@ -1048,8 +1048,6 @@ double nega_alpha_ordering_final(const board *b, const long long strt, int skip_
 }
 
 double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
-    if (tim() - strt > tl)
-        return -inf;
     ++searched_nodes;
     if (b->n == hw2_m1)
         return final_move(b, false);
@@ -1089,8 +1087,6 @@ double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth,
 }
 
 double nega_alpha_ordering(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
-    if (tim() - strt > tl)
-        return -inf;
     ++searched_nodes;
     if (skip_cnt == 2 || b->n == hw2)
         return end_game(b);
@@ -1165,8 +1161,6 @@ double nega_alpha_ordering(const board *b, const long long strt, int skip_cnt, i
 }
 
 double nega_scout(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
-    if (tim() - strt > tl)
-        return -inf;
     ++searched_nodes;
     if (skip_cnt == 2 || b->n == hw2)
         return end_game(b);
@@ -1434,7 +1428,7 @@ inline int random_move(board b){
             if (move_arr[b.p][b.b[idx]][local_place[idx][cell]][0] || move_arr[b.p][b.b[idx]][local_place[idx][cell]][1]){
                 moves.push_back(cell);
                 board nb = move(&b, cell);
-                values.push_back(evaluate(&nb) + 2.0);
+                values.push_back(2.0 + evaluate(&nb));
                 break;
             }
         }
@@ -1457,7 +1451,10 @@ inline int random_move(board b){
 int main(){
     int ai_player, policy, n_stones;
     board b;
-    cin >> xorw;
+    int num;
+    cin >> num;
+    for (int i = 0; i < num; ++i)
+        myrandom();
     cin >> ai_player;
     long long strt = tim();
     search_result result;
@@ -1473,33 +1470,27 @@ int main(){
     f_search_table_idx = 0;
     search_hash_table_init(f_search_table_idx);
     cerr << "iniitialized in " << tim() - strt << " ms" << endl;
-    if (ai_player == 0){
-        string raw_board;
-        for (int i = 0; i < hw; ++i){
-            cin >> raw_board; cin.ignore();
-        }
-        policy = 37;
-        cerr << "book policy " << policy << endl;
-        cout << coord_str(policy) << " " << calc_result_value(0.0) << endl;
-    } else{
-        string raw_board;
-        for (int i = 0; i < hw; ++i){
-            cin >> raw_board; cin.ignore();
-        }
-        policy = 45;
-        cout << coord_str(policy) << " " << calc_result_value(0.0) << endl;
-    }
     while (true){
         n_stones = input_board(b.b);
         b.n = n_stones;
         b.p = ai_player;
-        if (n_stones > 4 + 15){
-            result = search(b);
-            cerr << "policy " << result.policy << endl;
-            cout << coord_str(result.policy) << " " << calc_result_value(result.value) << endl;
+        if (n_stones <= 5){
+            if (ai_player == 0){
+                policy = 37;
+                cout << coord_str(policy) << " " << calc_result_value(0.0) << endl;
+            } else{
+                policy = 45;
+                cout << coord_str(policy) << " " << calc_result_value(0.0) << endl;
+            }
         } else{
-            policy = random_move(b);
-            cout << coord_str(policy) << " 0" << endl;
+            if (n_stones >= 4 + 7){
+                result = search(b);
+                cerr << "policy " << result.policy << endl;
+                cout << coord_str(result.policy) << " " << calc_result_value(result.value) << endl;
+            } else{
+                policy = random_move(b);
+                cout << coord_str(policy) << " 0" << endl;
+            }
         }
     }
     return 0;
