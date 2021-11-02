@@ -828,33 +828,6 @@ inline void calc_pattern(const board *b, double arr[]){
     idx = reverse_board[b->b[32]] / pow3[4] * pow3[6] + pop_mid[reverse_board[b->b[33]]][7][4] * pow3[3] + pop_mid[reverse_board[b->b[31]]][7][4];
     cross += ev_arr[phase_idx][10][idx];
 
-    /*
-    idx = b->b[0] / pow3[3] * pow3[5] + b->b[1] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[0]] / pow3[3] * pow3[5] + reverse_board[b->b[1]] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = b->b[7] / pow3[3] * pow3[5] + b->b[6] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[7]] / pow3[3] * pow3[5] + reverse_board[b->b[6]] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = b->b[8] / pow3[3] * pow3[5] + b->b[9] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[8]] / pow3[3] * pow3[5] + reverse_board[b->b[9]] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = b->b[15] / pow3[3] * pow3[5] + b->b[14] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    idx = reverse_board[b->b[15]] / pow3[3] * pow3[5] + reverse_board[b->b[14]] / pow3[3];
-    corner25 += ev_arr[phase_idx][9][idx];
-    */
-    //cerr << line2 / 8.0 << " " << line3 / 8.0 << " " << line4 / 8.0 << " " << diagonal5 / 8.0 << " " << diagonal6 / 8.0 << " " << diagonal7 / 8.0 << " " << diagonal8 / 4.0 << " " << edge_2x / 8.0 << " " << triangle / 8.0 << " " << edge_block / 8.0 << " " << cross / 8.0 << endl;
-    //res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + corner25 / 8.0;
-    //res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + edge_block / 8.0 + cross / 8.0;
-    //res = line2 + line3 + line4 + diagonal5 + diagonal6 + diagonal7 + diagonal8 + edge_2x + triangle + corner25;
-    //if (b->p == 1)
-    //    res = -res;
-    //res += canput_evaluate(b) * canput_weight[turn];
-    //return min(0.9999, max(-0.9999, res));
-    //return res;
     arr[0] = line2 / 8.0;
     arr[1] = line3 / 8.0;
     arr[2] = line4 / 8.0;
