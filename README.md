@@ -6,7 +6,7 @@
 
 Egaroucid3 is an Othello AI.
 
-**You can [play former version of this AI on the Web](https://www.egaroucid.nyanyan.dev/).**
+**You can [play this AI on the Web](https://www.egaroucid.nyanyan.dev/).**
 
 There are former versions:
 

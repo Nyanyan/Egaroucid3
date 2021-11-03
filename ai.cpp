@@ -128,6 +128,7 @@ double all_bias0[n_phases][n_all_dense0];
 double all_dense1[n_phases][n_all_dense0];
 double all_bias1[n_phases];
 
+int ai_player;
 
 inline long long tim(){
     return chrono::duration_cast<chrono::milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
@@ -964,6 +965,8 @@ double nega_alpha_final(const board *b, const long long strt, int skip_cnt, int 
                     alpha = max(alpha, -nega_alpha_final(&nb, strt, 0, depth - 1, -beta, -alpha));
                     if (beta <= alpha)
                         return alpha;
+                    if(b->p == ai_player && alpha == 1.0)
+                        return alpha;
                     break;
                 }
             }
@@ -1019,6 +1022,8 @@ double nega_alpha_ordering_final(const board *b, const long long strt, int skip_
     for (int i = 0; i < canput; ++i){
         alpha = max(alpha, -nega_alpha_ordering_final(&nb[i], strt, 0, depth - 1, -beta, -alpha));
         if (beta <= alpha)
+            return alpha;
+        if(b->p == ai_player && alpha == 1.0)
             return alpha;
     }
     return alpha;
