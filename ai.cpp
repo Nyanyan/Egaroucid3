@@ -861,20 +861,18 @@ inline double evaluate(const board *b){
     in_arr[11] = (double)calc_canput(b) / 30.0;
     in_arr[12] = (double)calc_surround0(b) / 30.0;
     in_arr[13] = (double)calc_surround1(b) / 30.0;
-    double hidden[n_all_dense0];
+    double hidden, res = all_bias1[phase_idx];
     int i, j;
     for (i = 0; i < n_all_dense0; ++i){
-        hidden[i] = all_bias0[phase_idx][i];
+        hidden = all_bias0[phase_idx][i];
         for (j = 0; j < n_all_input; ++j)
-            hidden[i] += in_arr[j] * all_dense0[phase_idx][i][j];
-        hidden[i] = leaky_relu(hidden[i]);
+            hidden += in_arr[j] * all_dense0[phase_idx][i][j];
+        hidden = leaky_relu(hidden);
+        res += hidden * all_dense1[phase_idx][i];
     }
-    double res = all_bias1[phase_idx];
-    for (i = 0; i < n_all_dense0; ++i)
-        res += hidden[i] * all_dense1[phase_idx][i];
     if (b->p)
         res = -res;
-    return min(0.9999, max(-0.9999, res));
+    return res; //return min(0.9999, max(-0.9999, res));
 }
 
 double canput_exact_evaluate(board *b){
@@ -1030,8 +1028,6 @@ double nega_alpha_ordering_final(const board *b, const long long strt, int skip_
 }
 
 double nega_alpha(const board *b, const long long strt, int skip_cnt, int depth, double alpha, double beta){
-    if (tim() - strt > tl)
-        return -inf;
     ++searched_nodes;
     if (b->n == hw2_m1)
         return final_move(b, false);

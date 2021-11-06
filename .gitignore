@@ -26,3 +26,4 @@ ffotest/ffotest
 ffotest/ai.out
 multi_prob_cut/ai.out
 multi_prob_cut/data_player
+self_play/ai.out

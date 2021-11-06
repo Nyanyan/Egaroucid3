@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define tl 30
+#define tl 150
 
 #define hw 8
 #define hw_m1 7
@@ -863,7 +863,7 @@ inline double evaluate(const board *b){
         res += hidden[i] * all_dense1[phase_idx][i];
     if (b->p)
         res = -res;
-    res += myrandom() * 0.04 - 0.02;
+    //res += myrandom() * 0.04 - 0.02;
     return min(0.9999, max(-0.9999, res));
 }
 
@@ -1398,7 +1398,7 @@ int random_move(board b){
             if (move_arr[b.p][b.b[idx]][local_place[idx][cell]][0] || move_arr[b.p][b.b[idx]][local_place[idx][cell]][1]){
                 moves.push_back(cell);
                 nb = move(&b, cell);
-                v = evaluate(&nb) + 2.0;
+                v = 1.0; //evaluate(&nb) + 2.0;
                 v_sum += v;
                 vals.push_back(v);
                 break;
@@ -1445,7 +1445,7 @@ int main(){
         b.p = ai_player;
         if (ai_player == 0 && n_stones == 4)
             cout << coord_str(37) << endl;
-        else if (n_stones < 4 + 10)
+        else if (n_stones < 4 + 8 || myrandom() < 0.01)
             cout << coord_str(random_move(b)) << endl;
         else
             cout << coord_str(search(b).policy) << endl;

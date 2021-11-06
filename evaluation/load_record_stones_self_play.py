@@ -1,22 +1,10 @@
 from tqdm import trange
-import subprocess
-from random import randrange
 
 hw = 8
 hw2 = 64
+board_index_num = 38
 dy = [0, 1, 0, -1, 1, 1, -1, -1]
 dx = [1, 0, -1, 0, 1, -1, 1, -1]
-
-all_chars = [
-    '!', '#', '$', '&', "'", '(', ')', '*', 
-    '+', ',', '-', '.', '/', '0', '1', '2', 
-    '3', '4', '5', '6', '7', '8', '9', ':', 
-    ';', '<', '=', '>', '?', '@', 'A', 'B', 
-    'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 
-    'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 
-    'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 
-    '[', ']', '^', '_', '`', 'a', 'b', 'c', 
-    'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '{', '|', '}', '~']
 
 def digit(n, r):
     n = str(n)
@@ -167,58 +155,54 @@ class reversi:
             #print('Draw!', self.nums[0], '-', self.nums[1])
             return -1
 
-ais = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(2)]
-
-for i in range(2):
-    s_in = str(randrange(1, 100000)) + '\n' + str(i) + '\n'
-    ais[i].stdin.write(s_in.encode('utf-8'))
-    ais[i].stdin.flush()
-
-def create_data(num):
-    global ais
+def collect_data(num, s):
+    global dict_data
+    grids = []
     rv = reversi()
-    record = []
+    idx = 0
+    turn = 0
     while True:
+        if idx >= len(s):
+            return
         if rv.check_pass() and rv.check_pass():
             break
-        s_in = ''
-        for y in range(hw):
-            for x in range(hw):
-                s_in += '0' if rv.grid[y][x] == 0 else '1' if rv.grid[y][x] == 1 else '.'
-            s_in += '\n'
-        ais[rv.player].stdin.write(s_in.encode('utf-8'))
-        ais[rv.player].stdin.flush()
-        #print(s_in)
-        try:
-            y, x = [int(i) for i in ais[rv.player].stdout.readline().split()]
-        except:
-            print('crash')
-            ais = [subprocess.Popen('./ai.out'.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) for _ in range(2)]
-            for i in range(2):
-                s_in = str(randrange(1, 20000)) + '\n' + str(i) + '\n'
-                ais[i].stdin.write(s_in.encode('utf-8'))
-                ais[i].stdin.flush()
-            return
-        record.append([rv.player, all_chars[y * hw + x]])
+        x = ord(s[idx]) - ord('a')
+        y = int(s[idx + 1]) - 1
+        idx += 2
+        if turn < 64:
+            grid_str = ''
+            for i in range(hw):
+                for j in range(hw):
+                    grid_str += '0' if rv.grid[i][j] == 0 else '1' if rv.grid[i][j] == 1 else '.'
+            grids.append(grid_str)
         if rv.move(y, x):
-            print(rv.player)
-            print(y, x)
-            print(s_in)
-            return
+            print('error')
+            exit()
+        turn += 1
+        if rv.end():
+            break
+    rv.check_pass()
+    #score = 1 if rv.nums[0] > rv.nums[1] else 0 if rv.nums[0] == rv.nums[1] else -1
     result = rv.nums[0] - rv.nums[1]
-    score = 1 if result > 0 else -1 if result < 0 else 0
-    with open('self_play/' + digit(num, 7) + '.txt', 'a') as f:
-        for player, policy in record:
-            f.write(str(player) + policy)
-        f.write(' ' + str(score) + '\n')
+    #score = 1 if result > 0 else -1 if result < 0 else 0
+    score = result
+    with open('data_stones/' + digit(num, 7) + '.txt', 'a') as f:
+        for grid in grids:
+            f.write(grid + ' ' + str(score) + '\n')
 
 
-
-num = 1000
-
-for i in range((num  + 999) // 1000):
-    for _ in trange(1000):
-        create_data(i + 29)
-
-for i in range(2):
-    ais[i].kill()
+games = []
+for year in range(0, 20):
+    raw_data = ''
+    with open('third_party/self_play/' + digit(year, 7) + '.txt', 'r') as f:
+        raw_data = f.read()
+    games.extend([i.split()[0] for i in raw_data.splitlines()])
+print(len(games))
+dict_data = {}
+idx = 0
+for i in trange(len(games)):
+    if len(games[i]) == 0:
+        continue
+    collect_data(118 + idx // 1000, games[i])
+    idx += 1
+print(idx)

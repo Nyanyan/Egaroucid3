@@ -15,6 +15,7 @@ from random import randrange
 import subprocess
 import datetime
 import os
+from math import tanh
 
 def LeakyReLU(x):
     return tf.math.maximum(0.01 * x, x)
@@ -63,6 +64,7 @@ def collect_data(num):
                 vals[i] /= 30
             #n_vals = [sum(vals[:11]), vals[11], vals[12], vals[13]]
             result = float(result)
+            result = tanh(result / 20)
             all_data.append(vals)
             all_labels.append(result)
 
@@ -95,7 +97,7 @@ test_labels = all_labels[n_train_data:len_data]
 model.compile(loss='mse', metrics='mae', optimizer='adam')
 print(model.evaluate(test_data, test_labels))
 early_stop = EarlyStopping(monitor='val_loss', patience=5)
-model_checkpoint = ModelCheckpoint(filepath=os.path.join('learned_data/models', 'model_{epoch:02d}_{val_loss:.5f}.h5'), monitor='val_loss', verbose=1)
+model_checkpoint = ModelCheckpoint(filepath=os.path.join('learned_data/models', 'model_{epoch:02d}_{val_loss:.5f}_{val_mae:.5f}.h5'), monitor='val_loss', verbose=1)
 history = model.fit(train_data, train_labels, epochs=n_epochs, validation_data=(test_data, test_labels), callbacks=[early_stop, model_checkpoint])
 
 now = datetime.datetime.today()

@@ -15,11 +15,12 @@ from random import randrange
 import subprocess
 import datetime
 import os
+from math import tanh, log
 
 inf = 10000000.0
 
-min_n_stones = 4 + 50
-max_n_stones = 4 + 60
+min_n_stones = 4 + 20
+max_n_stones = 4 + 30
 game_num = 117000
 test_ratio = 0.1
 n_epochs = 200
@@ -156,7 +157,8 @@ def collect_data(num):
         if min_n_stones <= calc_n_stones(board) < max_n_stones:
             #score = float(score)
             score = float(score)
-            score = 1.0 if score > 0.0 else -1.0 if score < 0.0 else 0.0
+            score = tanh(score / 20)
+            #score = 1.0 if score > 0.0 else -1.0 if score < 0.0 else 0.0
             '''
             for i in range(len(pattern_idx)):
                 lines = make_lines(board, pattern_idx[i])
@@ -195,6 +197,7 @@ for i in range(len(pattern_idx)):
     ys.append(y)
 y_all = Add()(ys)
 model = Model(inputs=x, outputs=y_all)
+#model = load_model('learned_data/bef_50_60.h5')
 model.summary()
 plot_model(model, to_file='model.png', show_shapes=True)
 
@@ -213,10 +216,17 @@ train_labels = all_labels[0:n_train_data]
 test_data = [arr[n_train_data:len_data] for arr in all_data]
 test_labels = all_labels[n_train_data:len_data]
 
+def atanh(x):
+    x = tf.keras.backend.max(-0.999999, tf.keras.backend.min(0.999999, x))
+    return 1.0 / 2.0 * tf.keras.backend.log((1 + x) / (1 - x))
+
+def my_mae(y_true, y_pred):
+    return tf.keras.backend.abs(atanh(y_true) - atanh(y_pred))
+
 model.compile(loss='mse', metrics='mae', optimizer='adam')
 print(model.evaluate(test_data, test_labels))
 early_stop = EarlyStopping(monitor='val_loss', patience=5)
-model_checkpoint = ModelCheckpoint(filepath=os.path.join('learned_data/models', 'model_{epoch:02d}_{val_loss:.5f}.h5'), monitor='val_loss', verbose=1)
+model_checkpoint = ModelCheckpoint(filepath=os.path.join('learned_data/models', 'model_{epoch:02d}_{val_loss:.5f}_{val_mae:.5f}.h5'), monitor='val_loss', verbose=1)
 history = model.fit(train_data, train_labels, epochs=n_epochs, validation_data=(test_data, test_labels), callbacks=[early_stop, model_checkpoint])
 
 now = datetime.datetime.today()

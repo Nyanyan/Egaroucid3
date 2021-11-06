@@ -40,7 +40,7 @@ def collect_data(num):
         print('cannot open')
         return
     for datum, _ in zip(data[:1000], trange(len(data[:1000]))):
-        board, player = datum.split()
+        board, player, _ = datum.split()
         if min_n_stones <= calc_n_stones(board):
             depth = randint(4, 10)
             board_proc = player + '\n' + str(int(depth / 4)) + '\n' + str(int(depth)) + '\n'
@@ -56,7 +56,7 @@ def collect_data(num):
             vhs.append(vh)
             vds.append(vd)
 
-for i in range(1):
+for i in [1]:
     collect_data(i)
 print(vhs[:10])
 print(vds[:10])

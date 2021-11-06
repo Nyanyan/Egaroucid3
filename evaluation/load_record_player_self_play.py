@@ -187,21 +187,21 @@ def collect_data(num, s):
     score = 1 if result > 0 else -1 if result < 0 else 0
     with open('data_player/' + digit(num, 7) + '.txt', 'a') as f:
         for grid in grids:
-            f.write(grid + ' ' + str(result) + '\n')
+            f.write(grid + ' ' + str(score) + '\n')
 
 
 games = []
-for year in reversed(range(1977, 2019 + 1)):
+for year in range(20):
     raw_data = ''
-    with open('third_party/records/' + str(year) + '.csv', 'r', encoding='utf-8-sig') as f:
+    with open('third_party/self_play/' + digit(year, 7) + '.txt', 'r') as f:
         raw_data = f.read()
-    games.extend([i for i in raw_data.splitlines()])
+    games.extend([i.split()[0] for i in raw_data.splitlines()])
 print(len(games))
 dict_data = {}
 idx = 0
 for i in trange(len(games)):
     if len(games[i]) == 0:
         continue
-    collect_data(idx // 1000, games[i])
+    collect_data(127 + idx // 1000, games[i])
     idx += 1
 print(idx)
