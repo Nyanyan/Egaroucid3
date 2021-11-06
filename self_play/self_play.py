@@ -217,11 +217,11 @@ def create_data(num):
 
 
 
-num = 2000
+num = 7000
 
 for i in range((num  + 999) // 1000):
     for _ in trange(1000):
-        create_data(i + 38)
+        create_data(i + 0)
 
 for i in range(2):
     ais[i].kill()
