@@ -10,11 +10,10 @@ def digit(n, r):
         n = '0' + n
     return n
 
+self_play_num = 4000
+parallel_num = 8
 
 while True:
-    self_play_num = 4000
-    parallel_num = 8
-
     one_self_play_num = self_play_num // parallel_num
     p = []
     strt_idx = 0
