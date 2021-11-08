@@ -55,8 +55,8 @@ using namespace std;
 */
 #define mpcwindow 1e-10
 
-#define n_all_input 14
-#define n_all_dense0 16
+#define n_all_input 4
+#define n_all_dense0 4
 
 #define win_read_depth 20
 
@@ -797,10 +797,10 @@ inline double ev_f(double a, double b){
     return a + b;
 }
 
-inline void calc_pattern(const board *b, double arr[]){
+inline double calc_pattern(const board *b){
     int idx, phase_idx;
     phase_idx = calc_phase_idx(b);
-    double line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, edge_block = 0.0, cross = 0.0;
+    double res, line2 = 0.0, line3 = 0.0, line4 = 0.0, diagonal5 = 0.0, diagonal6 = 0.0, diagonal7 = 0.0, diagonal8 = 0.0, edge_2x = 0.0, triangle = 0.0, edge_block = 0.0, cross = 0.0;
 
     line2 += ev_arr[phase_idx][0][b->b[1]];
     line2 += ev_arr[phase_idx][0][b->b[6]];
@@ -929,26 +929,17 @@ inline void calc_pattern(const board *b, double arr[]){
     idx = reverse_board[b->b[32]] / pow3[4] * pow3[6] + pop_mid[reverse_board[b->b[33]]][7][4] * pow3[3] + pop_mid[reverse_board[b->b[31]]][7][4];
     cross += ev_arr[phase_idx][10][idx];
 
-    arr[0] = line2 / 8.0;
-    arr[1] = line3 / 8.0;
-    arr[2] = line4 / 8.0;
-    arr[3] = diagonal5 / 8.0;
-    arr[4] = diagonal6 / 8.0;
-    arr[5] = diagonal7 / 8.0;
-    arr[6] = diagonal8 / 4.0;
-    arr[7] = edge_2x / 8.0;
-    arr[8] = triangle / 8.0;
-    arr[9] = edge_block / 8.0;
-    arr[10] = cross / 8.0;
+    res = line2 / 8.0 + line3 / 8.0 + line4 / 8.0 + diagonal5 / 8.0 + diagonal6 / 8.0 + diagonal7 / 8.0 + diagonal8 / 4.0 + edge_2x / 8.0 + triangle / 8.0 + edge_block / 8.0 + cross / 8.0;
+    return res;
 }
 
 inline double evaluate(const board *b){
     int phase_idx = calc_phase_idx(b);
     double in_arr[n_all_input];
-    calc_pattern(b, in_arr);
-    in_arr[11] = (double)calc_canput(b) / 30.0;
-    in_arr[12] = (double)calc_surround0(b) / 30.0;
-    in_arr[13] = (double)calc_surround1(b) / 30.0;
+    in_arr[0] = calc_pattern(b);
+    in_arr[1] = (double)calc_canput(b) / 30.0;
+    in_arr[2] = (double)calc_surround0(b) / 30.0;
+    in_arr[3] = (double)calc_surround1(b) / 30.0;
     double hidden, res = all_bias1[phase_idx];
     int i, j;
     for (i = 0; i < n_all_dense0; ++i){

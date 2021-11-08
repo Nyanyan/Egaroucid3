@@ -32,7 +32,7 @@ max_n_stones = 4 + stone_end
 game_num = int(sys.argv[1])
 test_ratio = 0.1
 n_epochs = 200
-n_input = 14
+n_input = 4
 
 all_data = []
 all_labels = []
@@ -73,7 +73,7 @@ def collect_data(num):
 
 
 x = Input(shape=(n_input))
-y = Dense(16)(x)
+y = Dense(4)(x)
 y = LeakyReLU(y)
 y = Dense(1)(y)
 
