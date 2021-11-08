@@ -172,7 +172,7 @@ def collect_data(num):
 model = load_model('learned_data/bef_' + str(stone_strt) + '_' + str(stone_end) + '.h5')
 #model.summary()
 
-for i in trange((game_num + 999) // 1000):
+for i in trange((game_num + 99) // 100):
     collect_data(i)
 len_data = len(all_labels)
 print(len_data)

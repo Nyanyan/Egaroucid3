@@ -1,6 +1,6 @@
 import subprocess
 
-self_play_num = 800
+self_play_num = 3200
 parallel_num = 8
 
 one_self_play_num = self_play_num // parallel_num
@@ -12,7 +12,7 @@ for i in range(parallel_num):
 
 for pp in p:
     pp.wait()
-exit()
+
 for strt in [20, 30, 40, 50]:
     end = strt + 10
     q = subprocess.run(('python learn.py ' + str(self_play_num) + ' ' + str(strt) + ' ' + str(end)).split())
