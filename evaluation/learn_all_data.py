@@ -23,9 +23,12 @@ def LeakyReLU(x):
 
 inf = 10000000.0
 
-min_n_stones = 4 + 50
-max_n_stones = 4 + 60
-game_num = 126000
+stone_strt = 50
+stone_end  = 60
+
+min_n_stones = 4 + stone_strt
+max_n_stones = 4 + stone_end
+game_num =77000
 test_ratio = 0.1
 n_epochs = 200
 n_input = 14

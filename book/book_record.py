@@ -67,6 +67,9 @@ def draw_data(record, player):
             else:
                 record_all[raw_record][0] += 1
 
+black_win = 0
+white_win = 0
+
 for i in trange(117):
     try:
         with open('data/' + digit(i, 7) + '.txt', 'r') as f:
@@ -84,34 +87,29 @@ for i in trange(117):
                 lose_data(record, 0)
                 win_data(record, 1)
     except:
+        print('cannot open')
         continue
-
-print(len(record_all))
-
-black_win = 0
-white_win = 0
-
-for i in trange(0):
+'''
+for i in trange(128, 201):
     try:
-        with open('self_play/' + digit(i, 7) + '.txt', 'r') as f:
+        with open('data/' + digit(i, 7) + '.txt', 'r') as f:
             records = f.read().splitlines()
         for datum in records:
             record, score = datum.split()
             score = int(score)
             if score == 0:
-                win_data(record, 0)
-                win_data(record, 1)
+                draw_data(record, 0)
+                draw_data(record, 1)
             elif score == 1:
-                black_win += 1
                 win_data(record, 0)
                 lose_data(record, 1)
             else:
-                white_win += 1
                 lose_data(record, 0)
                 win_data(record, 1)
     except:
+        print('cannot open')
         continue
-
+'''
 print(len(record_all))
 
 print(black_win, white_win)

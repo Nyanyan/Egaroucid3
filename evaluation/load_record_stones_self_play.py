@@ -188,21 +188,24 @@ def collect_data(num, s):
     score = result
     with open('data_stones/' + digit(num, 7) + '.txt', 'a') as f:
         for grid in grids:
-            f.write(grid + ' ' + str(score) + '\n')
+            f.write(grid + ' ' + str(result) + '\n')
 
 
 games = []
-for year in range(0, 20):
-    raw_data = ''
-    with open('third_party/self_play/' + digit(year, 7) + '.txt', 'r') as f:
-        raw_data = f.read()
-    games.extend([i.split()[0] for i in raw_data.splitlines()])
+for year in range(0, 77):
+    try:
+        raw_data = ''
+        with open('third_party/self_play/' + digit(year, 7) + '.txt', 'r') as f:
+            raw_data = f.read()
+        games.extend([i.split()[0] for i in raw_data.splitlines()])
+    except:
+        continue
 print(len(games))
 dict_data = {}
 idx = 0
 for i in trange(len(games)):
     if len(games[i]) == 0:
         continue
-    collect_data(118 + idx // 1000, games[i])
+    collect_data(idx // 1000, games[i])
     idx += 1
 print(idx)

@@ -27,3 +27,8 @@ ffotest/ai.out
 multi_prob_cut/ai.out
 multi_prob_cut/data_player
 self_play/ai.out
+self_play/ai_add.out
+self_play/data_player
+self_play/data_additional
+self_play/learned_data
+self_play/third_party

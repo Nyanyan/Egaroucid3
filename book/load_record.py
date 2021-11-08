@@ -168,14 +168,13 @@ class reversi:
             return -1
 
 def collect_data(num, s):
-    global dict_data
     record = []
     rv = reversi()
     idx = 0
     turn = 0
     while True:
         if idx >= len(s):
-            return
+            break
         if rv.check_pass() and rv.check_pass():
             break
         x = ord(s[idx]) - ord('a')
@@ -190,25 +189,34 @@ def collect_data(num, s):
     rv.check_pass()
     #score = 1 if rv.nums[0] > rv.nums[1] else 0 if rv.nums[0] == rv.nums[1] else -1
     result = rv.nums[0] - rv.nums[1]
-    score = 1 if result > 0 else -1 if result < 0 else 0
-    with open('data/' + digit(num, 7) + '.txt', 'a') as f:
+    #score = 1 if result > 0 else -1 if result < 0 else 0
+    with open('data/record3/' + digit(num, 7) + '.txt', 'a') as f:
         for player, policy in record:
             f.write(str(player) + policy)
-        f.write(' ' + str(score) + '\n')
+        #f.write(' ' + str(score) + '\n')
+        f.write('\n')
 
 
 games = []
-for year in reversed(range(1977, 1989 + 1)):
-    raw_data = ''
-    with open('third_party/records/' + str(year) + '.csv', 'r', encoding='utf-8-sig') as f:
-        raw_data = f.read()
-    games.extend([i for i in raw_data.splitlines()])
+'''
+for year in range(77):
+    try:
+        raw_data = ''
+        with open('third_party/self_play/' + digit(year, 7) + '.txt', 'r') as f:
+            raw_data = f.read()
+        games.extend([i for i in raw_data.splitlines()])
+    except:
+        continue
+'''
+raw_data = ''
+with open('third_party/records3.txt', 'r') as f:
+    raw_data = f.read()
+games.extend([i for i in raw_data.splitlines()])
 print(len(games))
-dict_data = {}
 idx = 0
 for i in trange(len(games)):
     if len(games[i]) == 0:
         continue
-    collect_data(idx // 1000 + 118, games[i])
+    collect_data(idx // 1000, games[i])
     idx += 1
 print(idx)

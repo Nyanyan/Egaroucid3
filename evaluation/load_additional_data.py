@@ -49,10 +49,13 @@ def collect_data(num):
             new_data.append(tmp)
     return new_data
 
-for i in range(127):
-    data = collect_data(i)
-    with open('data_additional/' + digit(i, 7) + '.txt', 'w') as f:
-        for datum in data:
-            f.write(' '.join(datum) + '\n')
+for i in range(77):
+    try:
+        data = collect_data(i)
+        with open('data_additional/' + digit(i, 7) + '.txt', 'w') as f:
+            for datum in data:
+                f.write(' '.join(datum) + '\n')
+    except:
+        continue
 
 evaluate.kill()

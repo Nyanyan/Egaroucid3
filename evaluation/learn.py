@@ -19,9 +19,12 @@ from math import tanh, log
 
 inf = 10000000.0
 
-min_n_stones = 4 + 20
-max_n_stones = 4 + 30
-game_num = 117000
+stone_strt = 50
+stone_end = 60
+
+min_n_stones = 4 + stone_strt
+max_n_stones = 4 + stone_end
+game_num = 77000
 test_ratio = 0.1
 n_epochs = 200
 one_board_num = 1
@@ -177,6 +180,7 @@ def collect_data(num):
 def LeakyReLU(x):
     return tf.math.maximum(0.01 * x, x)
 '''
+'''
 y_all = None
 x = [None for _ in range(len(pattern_idx))]
 ys = []
@@ -197,7 +201,8 @@ for i in range(len(pattern_idx)):
     ys.append(y)
 y_all = Add()(ys)
 model = Model(inputs=x, outputs=y_all)
-#model = load_model('learned_data/bef_50_60.h5')
+'''
+model = load_model('learned_data/bef_' + str(stone_strt) + '_' + str(stone_end) + '.h5')
 model.summary()
 plot_model(model, to_file='model.png', show_shapes=True)
 

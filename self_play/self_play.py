@@ -1,6 +1,7 @@
 from tqdm import trange
 import subprocess
-from random import randrange
+from random import randrange, random
+import sys
 
 hw = 8
 hw2 = 64
@@ -174,6 +175,9 @@ for i in range(2):
     ais[i].stdin.write(s_in.encode('utf-8'))
     ais[i].stdin.flush()
 
+with open('third_party/records3.txt', 'r') as f:
+    firsts = f.read().splitlines()
+
 def coord_translate(y, x):
     return chr(ord('a') + x) + str(y + 1)
 
@@ -181,6 +185,24 @@ def create_data(num):
     global ais
     rv = reversi()
     record = []
+    grids = []
+    if random() < 0.5:
+        rnd = randrange(0, len(firsts))
+        for idx in range(0, len(firsts[rnd]), 2):
+            if rv.check_pass() and rv.check_pass():
+                break
+            x = ord(firsts[rnd][idx]) - ord('a')
+            y = int(firsts[rnd][idx + 1]) - 1
+            record.append(coord_translate(y, x))
+            grid_str = ''
+            for i in range(hw):
+                for j in range(hw):
+                    grid_str += '0' if rv.grid[i][j] == 0 else '1' if rv.grid[i][j] == 1 else '.'
+            grids.append(grid_str + ' ' + str(rv.player))
+            if rv.move(y, x):
+                print(rv.player)
+                print(y, x)
+                return
     while True:
         if rv.check_pass() and rv.check_pass():
             break
@@ -203,6 +225,11 @@ def create_data(num):
                 ais[i].stdin.flush()
             return
         record.append(coord_translate(y, x))
+        grid_str = ''
+        for i in range(hw):
+            for j in range(hw):
+                grid_str += '0' if rv.grid[i][j] == 0 else '1' if rv.grid[i][j] == 1 else '.'
+        grids.append(grid_str + ' ' + str(rv.player))
         if rv.move(y, x):
             print(rv.player)
             print(y, x)
@@ -214,14 +241,16 @@ def create_data(num):
         for policy in record:
             f.write(policy)
         f.write(' ' + str(result) + '\n')
+    with open('data_player/' + digit(num, 7) + '.txt', 'a') as f:
+        for grid in grids:
+            f.write(grid + ' ' + str(result) + '\n')
 
+num = int(sys.argv[1])
+strt_idx = int(sys.argv[2])
 
-
-num = 7000
-
-for i in range((num  + 999) // 1000):
-    for _ in trange(1000):
-        create_data(i + 0)
+for i in range((num  + 99) // 100):
+    for _ in trange(100):
+        create_data(i + strt_idx)
 
 for i in range(2):
     ais[i].kill()
